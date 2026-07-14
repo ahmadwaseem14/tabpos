@@ -1,0 +1,187 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String   // Hashed password
+  name      String
+  role      String   @default("OWNER")
+  createdAt DateTime @default(now())
+}
+
+model Supplier {
+  id                 String             @id @default(uuid())
+  name               String
+  phone              String
+  address            String?
+  notes              String?
+  balance            Float              @default(0.0) // Outstanding amount to pay them
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  purchaseInvoices   PurchaseInvoice[]
+  quotations         Quotation[]
+  payments           Payment[]
+}
+
+model Quotation {
+  id          String   @id @default(uuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  date        DateTime @default(now())
+  title       String
+  details     String   // JSON string of models & prices
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+model Shopkeeper {
+  id                 String             @id @default(uuid())
+  name               String
+  phone              String
+  address            String?
+  shopName           String             @unique
+  creditLimit        Float              @default(0.0)
+  balance            Float              @default(0.0) // Outstanding amount they owe us
+  isOwnShop          Boolean            @default(false)
+  notes              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  saleInvoices       SaleInvoice[]
+  transfersFrom      Transfer[]         @relation("TransferFrom")
+  transfersTo        Transfer[]         @relation("TransferTo")
+  tabletInstances    TabletInstance[]
+  payments           Payment[]
+}
+
+model TabletModel {
+  id        String           @id @default(uuid())
+  brand     String
+  model     String
+  ram       String
+  storage   String
+  color     String
+  createdAt DateTime         @default(now())
+  instances TabletInstance[]
+
+  @@unique([brand, model, ram, storage, color])
+}
+
+model TabletInstance {
+  imei                 String           @id
+  serialNumber         String?          @unique
+  modelId              String
+  model                TabletModel      @relation(fields: [modelId], references: [id])
+  purchaseInvoiceId    String?
+  purchaseInvoice      PurchaseInvoice? @relation(fields: [purchaseInvoiceId], references: [id], onDelete: SetNull)
+  saleInvoiceId        String?
+  saleInvoice          SaleInvoice?     @relation(fields: [saleInvoiceId], references: [id], onDelete: SetNull)
+  purchasePrice        Float            @default(0.0)
+  sellingPrice         Float?           // Selling price to shopkeeper/retail customer
+  locationType         String           // 'WAREHOUSE', 'SHOPKEEPER', 'OWN_SHOP'
+  locationShopkeeperId String?
+  locationShopkeeper   Shopkeeper?      @relation(fields: [locationShopkeeperId], references: [id])
+  qcStatus             String           @default("UNCHECKED") // 'UNCHECKED', 'CHECKED_OK', 'FAULTY'
+  status               String           @default("AVAILABLE") // 'AVAILABLE', 'SOLD', 'RETURNED_TO_SUPPLIER', 'DAMAGED', 'LOST'
+  checkedAt            DateTime?
+  checkedNotes         String?
+  transfers            TransferItem[]
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+}
+
+model PurchaseInvoice {
+  id           String           @id @default(uuid())
+  invoiceNo    String           @unique
+  date         DateTime         @default(now())
+  supplierId   String
+  supplier     Supplier         @relation(fields: [supplierId], references: [id])
+  tax          Float            @default(0.0)
+  discount     Float            @default(0.0)
+  freight      Float            @default(0.0)
+  extraCharges Float            @default(0.0)
+  totalAmount  Float            @default(0.0) // Final calculated cost
+  notes        String?
+  tablets      TabletInstance[]
+  createdAt    DateTime         @default(now())
+}
+
+model SaleInvoice {
+  id              String           @id @default(uuid())
+  invoiceNo       String           @unique
+  date            DateTime         @default(now())
+  shopkeeperId    String
+  shopkeeper      Shopkeeper       @relation(fields: [shopkeeperId], references: [id])
+  tax             Float            @default(0.0)
+  discount        Float            @default(0.0)
+  totalAmount     Float            @default(0.0)
+  totalCost       Float            @default(0.0)
+  ownerProfit     Float            @default(0.0)
+  paymentReceived Float            @default(0.0)
+  balanceDue      Float            @default(0.0)
+  paymentMethod   String           // 'CASH', 'BANK', 'EASYPAISA', 'JAZZCASH', 'CHEQUE'
+  notes           String?
+  tablets         TabletInstance[]
+  createdAt       DateTime         @default(now())
+}
+
+model Transfer {
+  id             String         @id @default(uuid())
+  invoiceNo      String?        @unique
+  date           DateTime       @default(now())
+  fromLocation   String         // 'WAREHOUSE', 'SHOPKEEPER', 'OWN_SHOP'
+  fromShopkeeperId String?
+  fromShopkeeper Shopkeeper?    @relation("TransferFrom", fields: [fromShopkeeperId], references: [id])
+  toLocation     String         // 'WAREHOUSE', 'SHOPKEEPER', 'OWN_SHOP'
+  toShopkeeperId String?
+  toShopkeeper   Shopkeeper?    @relation("TransferTo", fields: [toShopkeeperId], references: [id])
+  notes          String?
+  items          TransferItem[]
+  createdAt      DateTime       @default(now())
+}
+
+model TransferItem {
+  id         String         @id @default(uuid())
+  transferId String
+  transfer   Transfer       @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  imei       String
+  tablet     TabletInstance @relation(fields: [imei], references: [imei])
+}
+
+model Payment {
+  id             String      @id @default(uuid())
+  date           DateTime    @default(now())
+  type           String      // 'TO_SUPPLIER', 'FROM_SHOPKEEPER'
+  supplierId     String?
+  supplier       Supplier?   @relation(fields: [supplierId], references: [id])
+  shopkeeperId   String?
+  shopkeeper     Shopkeeper? @relation(fields: [shopkeeperId], references: [id])
+  amount         Float
+  method         String      // 'CASH', 'BANK', 'EASYPAISA', 'JAZZCASH', 'CHEQUE'
+  notes          String?
+  createdAt      DateTime    @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  date      DateTime @default(now())
+  type      String   // 'PURCHASE', 'TRANSFER', 'QC_UPDATE', 'SALE', 'RETURN', 'PAYMENT', 'SYSTEM'
+  details   String
+  createdAt DateTime @default(now())
+}
+
+model Settings {
+  id             String  @id @default(uuid())
+  businessName   String  @default("My Tablet Business")
+  phone          String  @default("")
+  address        String  @default("")
+  currency       String  @default("PKR")
+  taxRate        Float   @default(0.0)
+  invoiceFooter  String  @default("Thank you for your business!")
+}
