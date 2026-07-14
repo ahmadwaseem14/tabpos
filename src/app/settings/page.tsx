@@ -188,7 +188,7 @@ export default function SettingsPage() {
             <div className="info-body">
               <div className="info-row"><span>App Name</span><strong>Tabs POS</strong></div>
               <div className="info-row"><span>Version</span><strong>1.0.0</strong></div>
-              <div className="info-row"><span>Database</span><strong>SQLite (Local)</strong></div>
+              <div className="info-row"><span>Database</span><strong>PostgreSQL (Cloud)</strong></div>
               <div className="info-row"><span>Framework</span><strong>Next.js 16</strong></div>
               <div className="info-row"><span>ORM</span><strong>Prisma 5.22</strong></div>
             </div>

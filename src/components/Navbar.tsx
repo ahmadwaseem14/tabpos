@@ -57,7 +57,7 @@ export default function Navbar({ onSearchOpen, onMenuOpen }: NavbarProps) {
 
         <div className="status-indicator">
           <Server size={14} className="status-icon" />
-          <span>Live SQLite</span>
+          <span>Live Cloud DB</span>
           <span className="status-dot"></span>
         </div>
 

@@ -19,9 +19,6 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Bypass authentication for now
-  return NextResponse.next();
-
   console.log(`[PROXY] Path: ${pathname}, Token present: ${!!token}`);
 
   if (!token && !isAuthPage) {

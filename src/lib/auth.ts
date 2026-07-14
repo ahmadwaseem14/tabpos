@@ -26,13 +26,11 @@ export function verifyToken(token: string) {
 }
 
 export function getTokenFromRequest(req: NextRequest): string | null {
-  return 'dummy-dev-token';
+  const cookieToken = req.cookies.get('auth_token')?.value;
+  return cookieToken || null;
 }
 
 export function getUserFromToken(token: string) {
-  if (token === 'dummy-dev-token') {
-    return { id: 'admin-id', username: 'admin', name: 'Owner', role: 'OWNER' };
-  }
   return verifyToken(token);
 }
 
