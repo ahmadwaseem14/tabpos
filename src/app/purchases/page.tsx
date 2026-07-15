@@ -579,6 +579,34 @@ export default function PurchasesPage() {
         .row-num { color: var(--text-muted); font-size: 0.75rem; text-align: center; }
 
         @media (max-width: 768px) {
+          .view-tabs {
+            width: 100%;
+          }
+          .view-tab {
+            flex: 1;
+            justify-content: center;
+          }
+          .catalog-hint {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+          }
+          .catalog-hint svg {
+            margin: 0 auto;
+          }
+          .catalog-link {
+            text-align: center;
+          }
+          .tablets-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+          }
+          .tablets-header-right {
+            width: 100%;
+            justify-content: space-between;
+          }
           .tablets-scroll { overflow-x: visible; }
           .entry-table, .entry-table tbody, .entry-table tr, .entry-table td {
             display: block;
@@ -588,6 +616,9 @@ export default function PurchasesPage() {
             display: none;
           }
           .entry-table tr {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
@@ -599,17 +630,73 @@ export default function PurchasesPage() {
             display: flex;
             flex-direction: column;
             gap: 6px;
-            padding: 8px 0;
-            border-bottom: 1px dashed var(--border);
+            padding: 4px 0;
+            border-bottom: none !important;
+          }
+          .entry-table td:nth-child(1) {
+            display: flex !important;
+            grid-column: span 2;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border) !important;
+            padding-bottom: 8px !important;
+            margin-bottom: 4px;
+            flex-direction: row;
+            justify-content: flex-start;
+          }
+          .entry-table td:nth-child(1)::before {
+            content: "Item #";
+          }
+          .entry-table td:nth-child(2) {
+            grid-column: span 2;
+          }
+          .entry-table td:nth-child(3) {
+            grid-column: span 2;
+          }
+          .entry-table td:nth-child(4) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(5) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(6) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(7) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(8) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(9) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(10) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(11) {
+            grid-column: span 1;
           }
           .entry-table td:last-child {
-            border-bottom: none;
-            flex-direction: row;
-            justify-content: flex-end;
-            padding-bottom: 0;
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            border: none !important;
+            padding: 0 !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            z-index: 10;
           }
-          .entry-table td:first-child {
-            display: none; /* Hide index number */
+          .entry-table td:last-child::before {
+            display: none !important;
+          }
+          .remove-row-btn {
+            opacity: 0.8;
+            background: var(--danger-light);
+            padding: 8px;
+            border-radius: 8px;
           }
           .entry-table td::before {
             content: attr(data-label);
@@ -626,6 +713,28 @@ export default function PurchasesPage() {
           }
           .price-input {
             width: 100% !important;
+          }
+          .header-row { grid-template-columns: 1fr; }
+          .charges-row { grid-template-columns: 1fr 1fr; }
+          .form-footer {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+            padding: 16px;
+          }
+          .totals {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+          }
+          .total-item {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .submit-btn {
+            width: 100%;
+            justify-content: center;
           }
         }
 
@@ -649,7 +758,7 @@ export default function PurchasesPage() {
         .scan-cell-btn { padding: 7px 9px; border-radius: 8px; background: var(--primary); color: white; flex-shrink: 0; }
         .price-cell { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 120px; }
         .price-cell span { padding: 7px 7px; font-size: 0.7rem; background: var(--bg-active); border-right: 1px solid var(--border); color: var(--text-muted); }
-        .price-input { border: none; background: transparent; padding: 7px 7px; width: 80px; outline: none; font-size: 0.875rem; font-weight: 600; }
+        .price-input { border: none; background: transparent; padding: 7px 7px; flex: 1; min-width: 0; outline: none; font-size: 0.875rem; font-weight: 600; }
         .remove-row-btn { padding: 7px; border-radius: 8px; color: var(--danger); opacity: 0.4; }
         .remove-row-btn:hover { opacity: 1; background: var(--danger-light); }
         .remove-row-btn:disabled { opacity: 0.15; cursor: not-allowed; }
@@ -670,8 +779,6 @@ export default function PurchasesPage() {
         .spinner-center { display: flex; justify-content: center; padding: 40px; }
         .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        @media (max-width: 768px) { .header-row { grid-template-columns: 1fr; } .charges-row { grid-template-columns: 1fr 1fr; } }
       `}</style>
     </div>
   );

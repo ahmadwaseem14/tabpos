@@ -471,7 +471,7 @@ export default function ShopkeepersPage() {
                           <h4>Financial Ledger</h4>
                           <span className="text-muted">History of POS invoices and payments</span>
                         </div>
-                        <div className="table-responsive pos-table-container">
+                        <div className="table-responsive pos-table-container responsive-table-cards">
                           <table className="pos-table">
                             <thead>
                               <tr>
@@ -486,17 +486,17 @@ export default function ShopkeepersPage() {
                               {ledger.length ? (
                                 ledger.map((item, idx) => (
                                   <tr key={idx}>
-                                    <td>{formatDate(item.date)}</td>
-                                    <td>
+                                    <td data-label="Date">{formatDate(item.date)}</td>
+                                    <td data-label="Type">
                                       <span className={`badge ${item.type === 'SALE' ? 'badge-primary' : 'badge-success'}`}>
                                         {item.type}
                                       </span>
                                     </td>
-                                    <td>{item.description}</td>
-                                    <td className={item.effect === 'INCREASE' ? 'text-warning font-semibold' : 'text-success font-semibold'}>
+                                    <td data-label="Description">{item.description}</td>
+                                    <td data-label="Impact" className={item.effect === 'INCREASE' ? 'text-warning font-semibold' : 'text-success font-semibold'}>
                                       {item.effect === 'INCREASE' ? '+' : '-'}{formatCurrency(item.amount)}
                                     </td>
-                                    <td><strong>{formatCurrency(item.runningBalance)}</strong></td>
+                                    <td data-label="Balance"><strong>{formatCurrency(item.runningBalance)}</strong></td>
                                   </tr>
                                 ))
                               ) : (
@@ -517,7 +517,7 @@ export default function ShopkeepersPage() {
                           <h4>Stock at Shopkeeper</h4>
                           <span className="text-muted">List of active tablets currently checked-out / transferred to this store</span>
                         </div>
-                        <div className="table-responsive pos-table-container">
+                        <div className="table-responsive pos-table-container responsive-table-cards">
                           <table className="pos-table">
                             <thead>
                               <tr>
@@ -532,25 +532,25 @@ export default function ShopkeepersPage() {
                               {inventory.length ? (
                                 inventory.map((item) => (
                                   <tr key={item.imei}>
-                                    <td>
+                                    <td data-label="Model">
                                       <strong>{item.brand} {item.model}</strong>
                                       <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                                         {item.ram} RAM / {item.storage} Storage
                                       </span>
                                     </td>
-                                    <td>
+                                    <td data-label="IMEI">
                                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                                         <strong>{item.imei}</strong>
                                         {item.serialNumber && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>S/N: {item.serialNumber}</span>}
                                       </div>
                                     </td>
-                                    <td>
+                                    <td data-label="QC Status">
                                       <span className={`badge ${item.qcStatus === 'CHECKED_OK' ? 'badge-success' : 'badge-warning'}`}>
                                         {item.qcStatus}
                                       </span>
                                     </td>
-                                    <td>{formatDate(item.dateSupplied)}</td>
-                                    <td>
+                                    <td data-label="Date">{formatDate(item.dateSupplied)}</td>
+                                    <td data-label="Action">
                                       <button 
                                         type="button" 
                                         className="btn-secondary return-stock-btn"
@@ -1393,8 +1393,30 @@ export default function ShopkeepersPage() {
           .header-balance {
             text-align: left;
           }
+          .tabs-nav {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 6px 8px 0 8px;
+            gap: 4px;
+            scrollbar-width: none;
+          }
+          .tabs-nav::-webkit-scrollbar {
+            display: none;
+          }
+          .tab-btn {
+            flex-shrink: 0;
+            padding: 8px 12px;
+          }
           .input-grid {
             grid-template-columns: 1fr;
+          }
+          .edit-actions {
+            flex-direction: column;
+            gap: 12px;
+          }
+          .edit-actions button {
+            width: 100%;
+            justify-content: center;
           }
         }
       `}</style>

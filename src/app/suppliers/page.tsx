@@ -445,7 +445,7 @@ export default function SuppliersPage() {
                           <h4>Account Ledger</h4>
                           <span className="text-muted">Chronological purchase and payment flow</span>
                         </div>
-                        <div className="table-responsive pos-table-container">
+                        <div className="table-responsive pos-table-container responsive-table-cards">
                           <table className="pos-table">
                             <thead>
                               <tr>
@@ -460,17 +460,17 @@ export default function SuppliersPage() {
                               {ledger.length ? (
                                 ledger.map((item, idx) => (
                                   <tr key={idx}>
-                                    <td>{formatDate(item.date)}</td>
-                                    <td>
+                                    <td data-label="Date">{formatDate(item.date)}</td>
+                                    <td data-label="Type">
                                       <span className={`badge ${item.type === 'PURCHASE' ? 'badge-danger' : 'badge-success'}`}>
                                         {item.type}
                                       </span>
                                     </td>
-                                    <td>{item.description}</td>
-                                    <td className={item.effect === 'INCREASE' ? 'text-danger font-semibold' : 'text-success font-semibold'}>
+                                    <td data-label="Description">{item.description}</td>
+                                    <td data-label="Amount" className={item.effect === 'INCREASE' ? 'text-danger font-semibold' : 'text-success font-semibold'}>
                                       {item.effect === 'INCREASE' ? '+' : '-'}{formatCurrency(item.amount)}
                                     </td>
-                                    <td><strong>{formatCurrency(item.runningBalance)}</strong></td>
+                                    <td data-label="Balance"><strong>{formatCurrency(item.runningBalance)}</strong></td>
                                   </tr>
                                 ))
                               ) : (
@@ -1395,11 +1395,58 @@ export default function SuppliersPage() {
           .header-balance {
             text-align: left;
           }
+          .tabs-nav {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 6px 8px 0 8px;
+            gap: 4px;
+            scrollbar-width: none;
+          }
+          .tabs-nav::-webkit-scrollbar {
+            display: none;
+          }
+          .tab-btn {
+            flex-shrink: 0;
+            padding: 8px 12px;
+          }
           .quotation-columns {
             grid-template-columns: 1fr;
           }
+          .builder-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: var(--bg-active);
+            padding: 12px;
+            border-radius: 10px;
+            position: relative;
+            padding-right: 32px;
+          }
+          .builder-row input {
+            width: 100% !important;
+          }
+          .builder-row input[type="number"] {
+            grid-column: span 2;
+            flex: none !important;
+          }
+          .builder-row .remove-row-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0;
+            padding: 4px 8px;
+          }
           .input-grid {
             grid-template-columns: 1fr;
+          }
+          .edit-actions {
+            flex-direction: column;
+            gap: 12px;
+          }
+          .edit-actions button {
+            width: 100%;
+            justify-content: center;
           }
         }
       `}</style>

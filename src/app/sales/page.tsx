@@ -93,10 +93,15 @@ export default function SalesPage() {
     }
   };
 
-  const loadAvailableTablets = async () => {
+  const loadAvailableTablets = async (shopkeeperId?: string) => {
     setLoadingAvailable(true);
     try {
-      const res = await fetch('/api/inventory?status=AVAILABLE');
+      // If a shopkeeper is selected, show only stock at their location.
+      // Otherwise show all available warehouse stock.
+      const params = shopkeeperId
+        ? `/api/inventory?status=AVAILABLE&shopkeeperId=${shopkeeperId}`
+        : '/api/inventory?status=AVAILABLE';
+      const res = await fetch(params);
       if (res.ok) {
         const data = await res.json();
         // Only include tablets that passed QC
@@ -110,6 +115,18 @@ export default function SalesPage() {
   };
 
   useEffect(() => { loadData(); loadAvailableTablets(); }, []);
+
+  // When shopkeeper changes, reload stock filtered to their location
+  useEffect(() => {
+    setSaleItems([]);
+    setSearchQuery('');
+    setIsDropdownOpen(false);
+    if (selectedShopkeeperId) {
+      loadAvailableTablets(selectedShopkeeperId);
+    } else {
+      loadAvailableTablets();
+    }
+  }, [selectedShopkeeperId]);
 
   // Lookup tablet by IMEI and add to sale list (fallback for scanner or manual entry)
   const lookupAndAddImei = async (imei: string) => {
@@ -243,7 +260,7 @@ export default function SalesPage() {
         setPaymentReceived('');
         setNotes('');
         loadData();
-        loadAvailableTablets();
+        loadAvailableTablets(selectedShopkeeperId || undefined);
         setActiveView('history');
       } else {
         addToast(data.error || 'Failed to create sale invoice.', 'error');
@@ -286,7 +303,7 @@ export default function SalesPage() {
             <div className="card pos-card">
               <div className="card-section">
                 <label className="section-label">Customer / Shopkeeper</label>
-                <select className="shopkeeper-select" value={selectedShopkeeperId} onChange={e => setSelectedShopkeeperId(e.target.value)}>
+                <select className="shopkeeper-select" value={selectedShopkeeperId} onChange={e => { setSelectedShopkeeperId(e.target.value); }}>
                   <option value="">-- Select Shopkeeper --</option>
                   {shopkeepers.map(sk => (
                     <option key={sk.id} value={sk.id}>{sk.shopName}{sk.isOwnShop ? ' (Own Shop)' : ''}</option>
@@ -303,7 +320,12 @@ export default function SalesPage() {
 
               {/* Product Selector with Searchable Dropdown list */}
               <div className="card-section" style={{ position: 'relative', zIndex: 5 }}>
-                <label className="section-label">Add Tablets to Sale ({availableTablets.length} available)</label>
+                <label className="section-label">
+                  {selectedShopkeeperId
+                    ? `Tablets at ${selectedShopkeeper?.shopName || 'this shop'} (${availableTablets.length})`
+                    : `Add Tablets to Sale — Select a shopkeeper first`
+                  }
+                </label>
                 
                 <div className="searchable-dropdown-container">
                   <div className="imei-input-row">
@@ -311,7 +333,7 @@ export default function SalesPage() {
                       <Search size={16} className="search-icon" />
                       <input
                         type="text"
-                        placeholder={loadingAvailable ? "Loading available stock..." : "Search model, brand or IMEI..."}
+                        placeholder={loadingAvailable ? 'Loading stock...' : selectedShopkeeperId ? `Search ${availableTablets.length} tablets at this shopkeeper...` : 'Select a shopkeeper first to see their stock...'}
                         value={searchQuery}
                         onChange={e => {
                           setSearchQuery(e.target.value);
@@ -599,11 +621,21 @@ export default function SalesPage() {
         .cost-cell { color: var(--text-muted); font-size: 0.75rem; }
         .price-cell { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--background); }
         .price-cell span { padding: 6px 8px; font-size: 0.75rem; color: var(--text-muted); background: var(--bg-active); border-right: 1px solid var(--border); }
-        .price-input { border: none; background: transparent; padding: 6px 8px; width: 80px; outline: none; font-size: 0.875rem; font-weight: 600; }
+        .price-input { border: none; background: transparent; padding: 6px 8px; flex: 1; min-width: 0; outline: none; font-size: 0.875rem; font-weight: 600; }
         .remove-btn { color: var(--danger); opacity: 0.5; padding: 4px; border-radius: 6px; }
         .remove-btn:hover { opacity: 1; background: var(--danger-light); }
 
         @media (max-width: 768px) {
+          .view-tabs {
+            width: 100%;
+          }
+          .view-tab {
+            flex: 1;
+            justify-content: center;
+          }
+          .pos-layout {
+            grid-template-columns: 1fr;
+          }
           .sale-items-table, .sale-items-table tbody, .sale-items-table tr, .sale-items-table td {
             display: block;
             width: 100%;
@@ -617,6 +649,7 @@ export default function SalesPage() {
             border-radius: 12px;
             padding: 12px;
             margin-bottom: 12px;
+            position: relative;
           }
           .sale-items-table td {
             display: flex;
@@ -627,8 +660,22 @@ export default function SalesPage() {
             text-align: right;
           }
           .sale-items-table td:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            border: none !important;
+            padding: 0 !important;
+            width: auto !important;
+            z-index: 10;
+          }
+          .sale-items-table td:last-child::before {
+            display: none !important;
+          }
+          .remove-btn {
+            opacity: 0.8;
+            background: var(--danger-light);
+            padding: 6px;
+            border-radius: 6px;
           }
           .sale-items-table td::before {
             content: attr(data-label);
@@ -674,7 +721,6 @@ export default function SalesPage() {
         .spinner-center { display: flex; justify-content: center; padding: 40px; }
         .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 768px) { .pos-layout { grid-template-columns: 1fr; } }
       `}</style>
     </div>
   );
