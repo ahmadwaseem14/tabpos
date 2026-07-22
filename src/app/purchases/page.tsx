@@ -579,6 +579,9 @@ export default function PurchasesPage() {
         .row-num { color: var(--text-muted); font-size: 0.75rem; text-align: center; }
 
         @media (max-width: 768px) {
+          .purchases-page {
+            gap: 16px;
+          }
           .view-tabs {
             width: 100%;
           }
@@ -597,125 +600,36 @@ export default function PurchasesPage() {
           .catalog-link {
             text-align: center;
           }
+          .header-card {
+            padding: 16px;
+            gap: 12px;
+          }
+          .header-row {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          .charges-row {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+          }
           .tablets-header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 12px;
-            padding: 16px;
+            gap: 10px;
+            padding: 14px 16px;
           }
           .tablets-header-right {
             width: 100%;
             justify-content: space-between;
           }
-          .tablets-scroll { overflow-x: visible; }
-          .entry-table, .entry-table tbody, .entry-table tr, .entry-table td {
-            display: block;
-            width: 100%;
+          .tablets-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 8px;
           }
-          .entry-table thead {
-            display: none;
+          .entry-table {
+            min-width: 800px;
           }
-          .entry-table tr {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
-            position: relative;
-          }
-          .entry-table td {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            padding: 4px 0;
-            border-bottom: none !important;
-          }
-          .entry-table td:nth-child(1) {
-            display: flex !important;
-            grid-column: span 2;
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--primary);
-            border-bottom: 1px solid var(--border) !important;
-            padding-bottom: 8px !important;
-            margin-bottom: 4px;
-            flex-direction: row;
-            justify-content: flex-start;
-          }
-          .entry-table td:nth-child(1)::before {
-            content: "Item #";
-          }
-          .entry-table td:nth-child(2) {
-            grid-column: span 2;
-          }
-          .entry-table td:nth-child(3) {
-            grid-column: span 2;
-          }
-          .entry-table td:nth-child(4) {
-            grid-column: span 1;
-          }
-          .entry-table td:nth-child(5) {
-            grid-column: span 1;
-          }
-          .entry-table td:nth-child(6) {
-            grid-column: span 1;
-          }
-          .entry-table td:nth-child(7) {
-            grid-column: span 1;
-          }
-          .entry-table td:nth-child(8) {
-            grid-column: span 1;
-          }
-          .entry-table td:nth-child(9) {
-            grid-column: span 1;
-          }
-          .entry-table td:nth-child(10) {
-            grid-column: span 1;
-          }
-          .entry-table td:nth-child(11) {
-            grid-column: span 1;
-          }
-          .entry-table td:last-child {
-            position: absolute;
-            top: 12px;
-            right: 16px;
-            border: none !important;
-            padding: 0 !important;
-            width: auto !important;
-            min-width: 0 !important;
-            max-width: none !important;
-            z-index: 10;
-          }
-          .entry-table td:last-child::before {
-            display: none !important;
-          }
-          .remove-row-btn {
-            opacity: 0.8;
-            background: var(--danger-light);
-            padding: 8px;
-            border-radius: 8px;
-          }
-          .entry-table td::before {
-            content: attr(data-label);
-            font-weight: 700;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-          .catalog-select, .table-input, .imei-cell, .price-cell {
-            width: 100% !important;
-            max-width: 100% !important;
-            min-width: 100% !important;
-          }
-          .price-input {
-            width: 100% !important;
-          }
-          .header-row { grid-template-columns: 1fr; }
-          .charges-row { grid-template-columns: 1fr 1fr; }
           .form-footer {
             flex-direction: column;
             align-items: stretch;
