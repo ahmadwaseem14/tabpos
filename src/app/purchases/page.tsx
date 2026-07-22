@@ -317,7 +317,7 @@ export default function PurchasesPage() {
                 <tbody>
                   {tablets.map((tab, idx) => (
                     <tr key={idx} className={tab.catalogModelId ? 'row-from-catalog' : ''}>
-                      <td className="row-num" data-item-num={idx + 1}>#{idx + 1}</td>
+                      <td className="row-num">{idx + 1}</td>
 
                       {/* Catalog Model Selector */}
                       <td data-label="From Catalog">
@@ -597,9 +597,6 @@ export default function PurchasesPage() {
           .catalog-link {
             text-align: center;
           }
-          .header-card {
-            padding: 16px;
-          }
           .tablets-header {
             flex-direction: column;
             align-items: flex-start;
@@ -610,7 +607,7 @@ export default function PurchasesPage() {
             width: 100%;
             justify-content: space-between;
           }
-          .tablets-scroll { overflow-x: visible; padding: 12px; }
+          .tablets-scroll { overflow-x: visible; }
           .entry-table, .entry-table tbody, .entry-table tr, .entry-table td {
             display: block;
             width: 100%;
@@ -619,55 +616,84 @@ export default function PurchasesPage() {
             display: none;
           }
           .entry-table tr {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 16px;
             margin-bottom: 16px;
             position: relative;
-            box-shadow: var(--shadow-sm);
           }
           .entry-table td {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            padding: 0 !important;
+            gap: 6px;
+            padding: 4px 0;
             border-bottom: none !important;
           }
           .entry-table td:nth-child(1) {
             display: flex !important;
+            grid-column: span 2;
             font-weight: 700;
-            font-size: 0.875rem;
+            font-size: 0.95rem;
             color: var(--primary);
             border-bottom: 1px solid var(--border) !important;
             padding-bottom: 8px !important;
             margin-bottom: 4px;
             flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
+            justify-content: flex-start;
           }
           .entry-table td:nth-child(1)::before {
-            content: "Item #" attr(data-item-num);
-            color: var(--foreground);
-            font-weight: 700;
+            content: "Item #";
+          }
+          .entry-table td:nth-child(2) {
+            grid-column: span 2;
+          }
+          .entry-table td:nth-child(3) {
+            grid-column: span 2;
+          }
+          .entry-table td:nth-child(4) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(5) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(6) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(7) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(8) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(9) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(10) {
+            grid-column: span 1;
+          }
+          .entry-table td:nth-child(11) {
+            grid-column: span 1;
           }
           .entry-table td:last-child {
             position: absolute;
             top: 12px;
-            right: 14px;
+            right: 16px;
             border: none !important;
             padding: 0 !important;
             width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
             z-index: 10;
           }
           .entry-table td:last-child::before {
             display: none !important;
           }
           .remove-row-btn {
-            opacity: 0.9;
+            opacity: 0.8;
             background: var(--danger-light);
             padding: 8px;
             border-radius: 8px;
@@ -684,7 +710,6 @@ export default function PurchasesPage() {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 100% !important;
-            box-sizing: border-box;
           }
           .price-input {
             width: 100% !important;
