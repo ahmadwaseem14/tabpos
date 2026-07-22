@@ -579,8 +579,15 @@ export default function PurchasesPage() {
         .row-num { color: var(--text-muted); font-size: 0.75rem; text-align: center; }
 
         @media (max-width: 768px) {
+          .purchases-page {
+            width: 100%;
+            max-width: 100vw;
+            box-sizing: border-box;
+            overflow-x: hidden;
+          }
           .view-tabs {
             width: 100%;
+            box-sizing: border-box;
           }
           .view-tab {
             flex: 1;
@@ -590,6 +597,7 @@ export default function PurchasesPage() {
             flex-direction: column;
             align-items: stretch;
             text-align: center;
+            box-sizing: border-box;
           }
           .catalog-hint svg {
             margin: 0 auto;
@@ -597,23 +605,34 @@ export default function PurchasesPage() {
           .catalog-link {
             text-align: center;
           }
+          .card {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+          }
           .header-card {
-            padding: 16px;
+            padding: 14px;
           }
           .tablets-header {
             flex-direction: column;
             align-items: flex-start;
             gap: 12px;
-            padding: 16px;
+            padding: 14px;
           }
           .tablets-header-right {
             width: 100%;
             justify-content: space-between;
           }
-          .tablets-scroll { overflow-x: visible; padding: 12px; }
+          .tablets-scroll { 
+            overflow-x: visible; 
+            padding: 12px; 
+            width: 100%;
+            box-sizing: border-box;
+          }
           .entry-table, .entry-table tbody, .entry-table tr, .entry-table td {
             display: block;
             width: 100%;
+            box-sizing: border-box;
           }
           .entry-table thead {
             display: none;
@@ -624,18 +643,22 @@ export default function PurchasesPage() {
             gap: 10px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 14px;
             position: relative;
             box-shadow: var(--shadow-sm);
+            width: 100%;
+            box-sizing: border-box;
           }
           .entry-table td {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px;
             padding: 0 !important;
             border-bottom: none !important;
+            width: 100% !important;
+            box-sizing: border-box;
           }
           .entry-table td:nth-child(1) {
             display: flex !important;
@@ -656,8 +679,8 @@ export default function PurchasesPage() {
           }
           .entry-table td:last-child {
             position: absolute;
-            top: 12px;
-            right: 14px;
+            top: 10px;
+            right: 12px;
             border: none !important;
             padding: 0 !important;
             width: auto !important;
@@ -680,14 +703,15 @@ export default function PurchasesPage() {
             text-transform: uppercase;
             letter-spacing: 0.5px;
           }
-          .catalog-select, .table-input, .imei-cell, .price-cell {
+          .catalog-select, .table-input, .imei-cell, .price-cell, .input-group input, .input-group select, .input-group textarea {
             width: 100% !important;
             max-width: 100% !important;
-            min-width: 100% !important;
+            min-width: 0 !important;
             box-sizing: border-box;
           }
           .price-input {
             width: 100% !important;
+            min-width: 0 !important;
           }
           .header-row { grid-template-columns: 1fr; }
           .charges-row { grid-template-columns: 1fr 1fr; }
@@ -695,7 +719,7 @@ export default function PurchasesPage() {
             flex-direction: column;
             align-items: stretch;
             gap: 16px;
-            padding: 16px;
+            padding: 14px;
           }
           .totals {
             flex-direction: column;
