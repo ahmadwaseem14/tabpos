@@ -580,75 +580,13 @@ export default function PurchasesPage() {
 
         @media (max-width: 768px) {
           .purchases-page {
-            gap: 16px;
-          }
-          .view-tabs {
-            width: 100%;
-          }
-          .view-tab {
-            flex: 1;
-            justify-content: center;
-          }
-          .catalog-hint {
-            flex-direction: column;
-            align-items: stretch;
-            text-align: center;
-          }
-          .catalog-hint svg {
-            margin: 0 auto;
-          }
-          .catalog-link {
-            text-align: center;
-          }
-          .header-card {
-            padding: 16px;
-            gap: 12px;
-          }
-          .header-row {
-            grid-template-columns: 1fr;
-            gap: 12px;
-          }
-          .charges-row {
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-          }
-          .tablets-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 14px 16px;
-          }
-          .tablets-header-right {
-            width: 100%;
-            justify-content: space-between;
-          }
-          .tablets-scroll {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 8px;
+            min-width: 900px;
+            padding-bottom: 20px;
           }
-          .entry-table {
-            min-width: 800px;
-          }
-          .form-footer {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 16px;
-            padding: 16px;
-          }
-          .totals {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 10px;
-          }
-          .total-item {
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-          }
-          .submit-btn {
-            width: 100%;
-            justify-content: center;
+          .view-tabs {
+            width: fit-content;
           }
         }
 
