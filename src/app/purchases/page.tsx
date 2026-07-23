@@ -788,34 +788,206 @@ export default function PurchasesPage() {
 
         /* Mobile layout */
         @media (max-width: 768px) {
-          .view-tabs { width: 100%; }
-          .view-tab { flex: 1; justify-content: center; }
-          .catalog-hint { flex-direction: column; align-items: stretch; text-align: center; }
-          .catalog-hint svg { margin: 0 auto; }
-          .catalog-link { text-align: center; }
-          .header-card { padding: 16px; }
-          .tablets-header { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
-          .tablets-header-right { width: 100%; justify-content: space-between; }
-          .tablets-scroll { overflow-x: visible; padding: 12px; }
-          .entry-table, .entry-table tbody, .entry-table tr, .entry-table td { display: block; width: 100%; }
-          .entry-table thead { display: none; }
-          .entry-table tr { display: flex; flex-direction: column; gap: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; box-shadow: var(--shadow-sm); }
-          .entry-table td { display: flex; flex-direction: column; gap: 5px; padding: 0 !important; border-bottom: none !important; }
-          .entry-table td:nth-child(1) { display: flex !important; font-weight: 700; font-size: 0.875rem; color: var(--primary); border-bottom: 1px solid var(--border) !important; padding-bottom: 8px !important; margin-bottom: 4px; flex-direction: row; justify-content: space-between; align-items: center; }
-          .entry-table td:nth-child(1)::before { content: "Item #" attr(data-item-num); color: var(--foreground); font-weight: 700; }
-          .entry-table td:last-child { position: absolute; top: 12px; right: 14px; border: none !important; padding: 0 !important; width: auto !important; z-index: 10; }
-          .entry-table td:last-child::before { display: none !important; }
-          .remove-row-btn { opacity: 0.9; background: var(--danger-light); padding: 8px; border-radius: 8px; }
-          .entry-table td::before { content: attr(data-label); font-weight: 700; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-          .searchable-catalog-select, .catalog-dropdown-panel, .table-input, .imei-cell, .price-cell { width: 100% !important; max-width: 100% !important; min-width: 100% !important; box-sizing: border-box; }
-          .catalog-dropdown-panel { position: static; margin-top: 6px; }
-          .price-input { width: 100% !important; }
-          .header-row { grid-template-columns: 1fr; }
-          .charges-row { grid-template-columns: 1fr 1fr; }
-          .form-footer { flex-direction: column; align-items: stretch; gap: 16px; padding: 16px; }
-          .totals { flex-direction: column; align-items: stretch; gap: 10px; }
-          .total-item { flex-direction: row; justify-content: space-between; align-items: center; }
-          .submit-btn { width: 100%; justify-content: center; }
+          .view-tabs {
+            width: 100%;
+          }
+          .view-tab {
+            flex: 1;
+            justify-content: center;
+          }
+          .catalog-hint {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+          }
+          .catalog-hint svg {
+            margin: 0 auto;
+          }
+          .catalog-link {
+            text-align: center;
+          }
+          .header-card {
+            padding: 16px;
+          }
+          .header-row {
+            grid-template-columns: 1fr;
+          }
+          .charges-row {
+            grid-template-columns: 1fr 1fr;
+          }
+          .tablets-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+          }
+          .tablets-header-right {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .tablets-card {
+            overflow: visible;
+          }
+          .tablets-scroll {
+            overflow-x: visible;
+            padding: 12px;
+          }
+
+          /* Convert table rows into mobile cards */
+          .entry-table,
+          .entry-table tbody,
+          .entry-table tr,
+          .entry-table td {
+            display: block;
+            width: 100%;
+          }
+          .entry-table thead {
+            display: none;
+          }
+          .entry-table tr {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+          }
+
+          /* Individual cell styling for mobile cards */
+          .entry-table td {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 0 !important;
+            border-bottom: none !important;
+          }
+
+          /* Data label pseudo-element */
+          .entry-table td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+
+          /* First cell: Item number header row */
+          .entry-table td:nth-child(1) {
+            display: flex !important;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border) !important;
+            padding-bottom: 8px !important;
+            margin-bottom: 4px;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .entry-table td:nth-child(1)::before {
+            content: "Item #" attr(data-item-num);
+            color: var(--foreground);
+            font-weight: 700;
+          }
+
+          /* Last cell: Remove button - absolute top right */
+          .entry-table td:last-child {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            border: none !important;
+            padding: 0 !important;
+            width: auto !important;
+            z-index: 10;
+          }
+          .entry-table td:last-child::before {
+            display: none !important;
+          }
+          .remove-row-btn {
+            opacity: 0.9;
+            background: var(--danger-light);
+            padding: 8px;
+            border-radius: 8px;
+          }
+
+          /* Make ALL inputs, selects, and interactive elements full width */
+          .searchable-catalog-select {
+            width: 100% !important;
+            min-width: 100% !important;
+          }
+          .catalog-trigger-btn {
+            width: 100% !important;
+          }
+          .catalog-dropdown-panel {
+            position: fixed !important;
+            top: auto !important;
+            bottom: 0;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            max-height: 60vh;
+            border-radius: 20px 20px 0 0 !important;
+            z-index: 100;
+            margin-top: 0;
+          }
+          .table-input {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 100% !important;
+            box-sizing: border-box;
+          }
+          .imei-input,
+          .qty-input,
+          .sn-input,
+          .brand-input,
+          .model-input,
+          .spec-input {
+            width: 100% !important;
+          }
+          .imei-cell {
+            width: 100% !important;
+          }
+          .imei-cell input {
+            flex: 1;
+          }
+          .price-cell {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .price-input {
+            width: 100% !important;
+            flex: 1;
+          }
+          .line-total-display {
+            width: 100%;
+          }
+
+          /* Form footer */
+          .form-footer {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+            padding: 16px;
+          }
+          .totals {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+          }
+          .total-item {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .submit-btn {
+            width: 100%;
+            justify-content: center;
+          }
         }
 
         /* History */
