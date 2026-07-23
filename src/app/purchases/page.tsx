@@ -199,10 +199,6 @@ export default function PurchasesPage() {
   const [notes, setNotes] = useState('');
   const [tablets, setTablets] = useState<TabletEntry[]>([createBlankTablet()]);
 
-  // Top Catalog Search state (matching Sales page top search)
-  const [topCatalogQuery, setTopCatalogQuery] = useState('');
-  const [isTopCatalogOpen, setIsTopCatalogOpen] = useState(false);
-
   const addToast = (text: string, type: 'success' | 'warning' | 'error') => {
     setToasts(prev => [...prev, { id: Math.random().toString(), text, type }]);
   };
@@ -230,39 +226,24 @@ export default function PurchasesPage() {
     setTablets(prev => prev.map((t, i) => i === idx ? { ...t, [field]: value } : t));
   };
 
-  // Select or add catalog model row
-  const addCatalogModelRow = (modelId: string) => {
+  // When a catalog model is selected, auto-fill all model fields
+  const selectCatalogModel = (idx: number, modelId: string) => {
     const found = catalogModels.find(m => m.id === modelId);
-    if (!found) return;
-
-    const lastIdx = tablets.length - 1;
-    const lastRow = tablets[lastIdx];
-    const isLastRowEmpty = lastRow && !lastRow.catalogModelId && !lastRow.model.trim() && !lastRow.purchasePrice.trim();
-
-    if (isLastRowEmpty) {
-      setTablets(prev => prev.map((t, i) => i === lastIdx ? {
-        ...t,
-        catalogModelId: found.id,
-        brand: found.brand,
-        model: found.model,
-        ram: found.ram,
-        storage: found.storage,
-        color: found.color,
-      } : t));
-    } else {
-      setTablets(prev => [...prev, {
-        catalogModelId: found.id,
-        imei: '',
-        serialNumber: '',
-        brand: found.brand,
-        model: found.model,
-        ram: found.ram,
-        storage: found.storage,
-        color: found.color,
-        purchasePrice: '',
-        quantity: '1'
-      }]);
+    if (!found) {
+      updateTablet(idx, 'catalogModelId', '');
+      return;
     }
+    setTablets(prev => prev.map((t, i) =>
+      i === idx ? {
+        ...t,
+        catalogModelId: modelId,
+        brand: found.brand,
+        model: found.model,
+        ram: found.ram,
+        storage: found.storage,
+        color: found.color,
+      } : t
+    ));
   };
 
   const removeTablet = (idx: number) => {
@@ -437,73 +418,6 @@ export default function PurchasesPage() {
               </div>
             </div>
 
-            {/* Prominent Sales-Style Catalog Search Bar */}
-            {catalogModels.length > 0 && (
-              <div className="catalog-top-search-bar" style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-active)' }}>
-                <label className="section-label" style={{ marginBottom: '8px', display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                  Quick Search Catalog to Add Items
-                </label>
-                <div className="searchable-dropdown-container">
-                  <div className="imei-input-row">
-                    <div className="search-input-wrapper">
-                      <Search size={16} className="search-icon" />
-                      <input
-                        type="text"
-                        placeholder={`Search ${catalogModels.length} catalog models (e.g. Samsung A54, iPad, 64GB)...`}
-                        value={topCatalogQuery}
-                        onChange={e => {
-                          setTopCatalogQuery(e.target.value);
-                          setIsTopCatalogOpen(true);
-                        }}
-                        onFocus={() => setIsTopCatalogOpen(true)}
-                      />
-                      {topCatalogQuery && (
-                        <button type="button" onClick={() => setTopCatalogQuery('')} className="clear-search">✕</button>
-                      )}
-                    </div>
-                  </div>
-
-                  {isTopCatalogOpen && (
-                    <div className="dropdown-overlay" onClick={() => setIsTopCatalogOpen(false)} />
-                  )}
-
-                  {isTopCatalogOpen && (
-                    <div className="dropdown-list-card">
-                      {catalogModels.filter(m => {
-                        const q = topCatalogQuery.toLowerCase().trim();
-                        if (!q) return true;
-                        return m.brand.toLowerCase().includes(q) || m.model.toLowerCase().includes(q) || m.ram.toLowerCase().includes(q) || m.storage.toLowerCase().includes(q) || m.color.toLowerCase().includes(q);
-                      }).length > 0 ? (
-                        catalogModels.filter(m => {
-                          const q = topCatalogQuery.toLowerCase().trim();
-                          if (!q) return true;
-                          return m.brand.toLowerCase().includes(q) || m.model.toLowerCase().includes(q) || m.ram.toLowerCase().includes(q) || m.storage.toLowerCase().includes(q) || m.color.toLowerCase().includes(q);
-                        }).map(m => (
-                          <div
-                            key={m.id}
-                            className="dropdown-item"
-                            onClick={() => {
-                              addCatalogModelRow(m.id);
-                              setTopCatalogQuery('');
-                              setIsTopCatalogOpen(false);
-                            }}
-                          >
-                            <div className="item-info">
-                              <strong>{m.brand} {m.model}</strong>
-                              <span>{m.ram} RAM / {m.storage} Storage • Color: {m.color}</span>
-                            </div>
-                            <button type="button" className="add-item-btn">+ Add Item</button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="dropdown-empty">No catalog models match &quot;{topCatalogQuery}&quot;</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
             <div className="tablets-scroll">
               <table className="entry-table">
                 <thead>
@@ -548,7 +462,7 @@ export default function PurchasesPage() {
                           <SearchableCatalogSelect
                             catalogModels={catalogModels}
                             selectedId={tab.catalogModelId}
-                            onSelect={(modelId) => addCatalogModelRow(modelId)}
+                            onSelect={(modelId) => selectCatalogModel(idx, modelId)}
                           />
                         </td>
 
@@ -803,34 +717,34 @@ export default function PurchasesPage() {
         .row-num { color: var(--text-muted); font-size: 0.75rem; text-align: center; }
 
         /* Searchable Catalog Select & Dropdowns — Sales page styling 1:1 */
-        .searchable-dropdown-container { position: relative; width: 100%; }
+        .searchable-dropdown-container { position: relative; width: 100%; min-width: 180px; }
         .imei-input-row { display: flex; gap: 8px; width: 100%; }
-        .search-input-wrapper { display: flex; align-items: center; gap: 8px; background: var(--background); border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; flex: 1; position: relative; transition: border-color 0.2s, box-shadow 0.2s; }
+        .search-input-wrapper { display: flex; align-items: center; gap: 8px; background: var(--background); border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; height: 38px; width: 100%; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
         .search-input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
         .search-icon { color: var(--text-muted); flex-shrink: 0; }
-        .search-input-wrapper input { border: none; background: transparent; padding: 10px 0; flex: 1; outline: none; font-size: 0.875rem; color: var(--foreground); min-width: 0; }
-        .clear-search { color: var(--text-muted); font-size: 0.875rem; background: none; border: none; cursor: pointer; padding: 2px 4px; }
+        .search-input-wrapper input { border: none; background: transparent; padding: 6px 0; flex: 1; outline: none; font-size: 0.8125rem; color: var(--foreground); min-width: 0; width: 100%; }
+        .clear-search { color: var(--text-muted); font-size: 0.8125rem; background: none; border: none; cursor: pointer; padding: 2px 4px; }
 
         .dropdown-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 40; }
-        .dropdown-list-card { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 50; max-height: 250px; overflow-y: auto; margin-top: 4px; }
-        .dropdown-item { padding: 10px 14px; border-bottom: 1px dashed var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.2s; }
+        .dropdown-list-card { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 50; max-height: 240px; overflow-y: auto; margin-top: 4px; min-width: 200px; }
+        .dropdown-item { padding: 10px 14px; border-bottom: 1px dashed var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.2s; gap: 8px; }
         .dropdown-item:last-child { border-bottom: none; }
         .dropdown-item:hover:not(.added) { background: var(--bg-active); }
         .dropdown-item.added { cursor: not-allowed; background: rgba(99, 102, 241, 0.03); }
         .item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-        .item-info strong { font-size: 0.85rem; color: var(--foreground); }
-        .item-info span { font-size: 0.75rem; color: var(--text-muted); }
-        .add-item-btn { font-size: 0.75rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 5px 10px; border-radius: 6px; flex-shrink: 0; border: none; }
+        .item-info strong { font-size: 0.8125rem; color: var(--foreground); }
+        .item-info span { font-size: 0.73rem; color: var(--text-muted); }
+        .add-item-btn { font-size: 0.75rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 4px 10px; border-radius: 6px; flex-shrink: 0; border: none; }
         [data-theme="dark"] .add-item-btn { background: rgba(129, 140, 248, 0.15); }
         .added-badge { font-size: 0.75rem; font-weight: 600; color: var(--success); display: flex; align-items: center; gap: 4px; }
         .dropdown-empty { padding: 16px; text-align: center; font-size: 0.8125rem; color: var(--text-muted); }
 
-        .catalog-selected-chip { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 12px; background: var(--primary-light); border: 1px solid var(--primary); border-radius: 10px; width: 100%; box-sizing: border-box; }
+        .catalog-selected-chip { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; background: var(--primary-light); border: 1px solid var(--primary); border-radius: 10px; width: 100%; height: 38px; box-sizing: border-box; }
         [data-theme="dark"] .catalog-selected-chip { background: rgba(129, 140, 248, 0.12); }
-        .selected-chip-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-        .selected-chip-info strong { font-size: 0.8125rem; color: var(--primary); }
-        .selected-chip-info small { font-size: 0.72rem; color: var(--text-muted); }
-        .clear-catalog-btn { color: var(--text-muted); padding: 2px; border-radius: 4px; flex-shrink: 0; background: none; border: none; cursor: pointer; }
+        .selected-chip-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+        .selected-chip-info strong { font-size: 0.8125rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .selected-chip-info small { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .clear-catalog-btn { color: var(--text-muted); padding: 3px; border-radius: 4px; flex-shrink: 0; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .clear-catalog-btn:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
         /* Table inputs */
