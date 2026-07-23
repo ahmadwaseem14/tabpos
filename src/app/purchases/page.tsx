@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ShoppingCart, Plus, ScanLine, X, FileText, Truck, BookOpen, Search, Check, ChevronDown } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ToastContainer, ToastMessage } from '@/components/Toast';
@@ -52,276 +53,103 @@ interface SearchableCatalogSelectProps {
 function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: SearchableCatalogSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+  const [isMobile, setIsMobile] = useState(false);
 
   const selectedModel = catalogModels.find(m => m.id === selectedId);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
   }, []);
+
+  useEffect(() => {
+    if (isOpen && triggerRef.current && !isMobile) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 4 + window.scrollY, left: rect.left + window.scrollX, width: rect.width });
+    }
+  }, [isOpen, isMobile]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (triggerRef.current?.contains(t)) return;
+      if (t.closest('.catalog-portal-dropdown')) return;
+      setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [isOpen]);
 
   const filteredModels = catalogModels.filter(m => {
     const q = query.toLowerCase().trim();
     if (!q) return true;
-    return (
-      m.brand.toLowerCase().includes(q) ||
-      m.model.toLowerCase().includes(q) ||
-      m.ram.toLowerCase().includes(q) ||
-      m.storage.toLowerCase().includes(q) ||
-      m.color.toLowerCase().includes(q)
-    );
+    return m.brand.toLowerCase().includes(q) || m.model.toLowerCase().includes(q) || m.ram.toLowerCase().includes(q) || m.storage.toLowerCase().includes(q) || m.color.toLowerCase().includes(q);
   });
 
-  return (
-    <div className={`searchable-catalog-select ${isOpen ? 'dropdown-open' : ''}`} ref={containerRef}>
-      {/* Selected model display chip */}
-      {selectedModel ? (
-        <div className="catalog-selected-chip">
-          <div className="selected-chip-info">
-            <strong>{selectedModel.brand} {selectedModel.model}</strong>
-            <small>{selectedModel.ram} / {selectedModel.storage} • {selectedModel.color}</small>
+  const itemPad = isMobile ? '12px 16px' : '10px 14px';
+
+  const dropdownContent = isOpen && !selectedModel && (
+    <div className="catalog-portal-dropdown" style={isMobile ? { position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999 } : { position: 'absolute', top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, zIndex: 9999 }}>
+      {isMobile && <div onClick={() => setIsOpen(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', zIndex: -1 }} />}
+      <div style={{ background: 'var(--bg-card)', borderRadius: isMobile ? '20px 20px 0 0' : '12px', border: '1px solid var(--border)', boxShadow: isMobile ? '0 -10px 25px rgba(0,0,0,0.3)' : '0 10px 25px rgba(0,0,0,0.25)', maxHeight: isMobile ? '60vh' : '260px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 16px' : '8px 12px', background: 'var(--bg-active)', borderBottom: '1px solid var(--border)', fontSize: isMobile ? '0.8rem' : '0.73rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+          <span>Catalog Models ({filteredModels.length})</span>
+          <button type="button" onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', padding: '2px 6px' }}>✕</button>
+        </div>
+        <div style={{ overflowY: 'auto', flex: 1, maxHeight: isMobile ? '50vh' : '220px' }}>
+          <div onClick={() => { onSelect(''); setIsOpen(false); }} style={{ padding: itemPad, borderBottom: '1px dashed var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', background: !selectedId ? 'var(--primary-light)' : 'var(--bg-card)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+              <strong style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>— Manual Entry —</strong>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Type brand & model manually</span>
+            </div>
           </div>
-          <button
-            type="button"
-            className="clear-catalog-btn"
-            title="Change selection"
-            onClick={() => {
-              onSelect('');
-              setQuery('');
-            }}
-          >
-            <X size={14} />
-          </button>
+          {filteredModels.length > 0 ? filteredModels.map(m => (
+            <div key={m.id} onClick={() => { onSelect(m.id); setIsOpen(false); setQuery(''); }} style={{ padding: itemPad, borderBottom: '1px dashed var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: m.id === selectedId ? 'var(--primary-light)' : 'var(--bg-card)', fontSize: '0.8125rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
+                <strong style={{ fontSize: '0.8125rem', color: 'var(--foreground)' }}>{m.brand} {m.model}</strong>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{m.ram} RAM / {m.storage} Storage • {m.color}</span>
+              </div>
+              {m.id === selectedId ? (
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14} /> Selected</span>
+              ) : (
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', background: 'var(--primary-light)', padding: '4px 10px', borderRadius: '6px', flexShrink: 0 }}>Select</span>
+              )}
+            </div>
+          )) : (
+            <div style={{ padding: '16px', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)', background: 'var(--bg-card)' }}>No models match "{query}"</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div ref={triggerRef} style={{ width: '100%' }}>
+      {selectedModel ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '6px 12px', background: 'var(--primary-light)', border: '1px solid var(--primary)', borderRadius: '10px', width: '100%', height: '40px', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0, flex: 1 }}>
+            <strong style={{ fontSize: '0.8125rem', color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedModel.brand} {selectedModel.model}</strong>
+            <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedModel.ram} / {selectedModel.storage} • {selectedModel.color}</small>
+          </div>
+          <button type="button" onClick={() => { onSelect(''); setQuery(''); }} style={{ color: 'var(--text-muted)', padding: '3px', borderRadius: '4px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><X size={14} /></button>
         </div>
       ) : (
-        /* Search input wrapper */
-        <div className="catalog-search-input-wrapper" onClick={() => setIsOpen(true)}>
-          <Search size={16} className="search-icon" />
-          <input
-            type="text"
-            placeholder={catalogModels.length > 0 ? "Search catalog model..." : "Catalog empty — type manually"}
-            value={query}
-            onChange={e => {
-              setQuery(e.target.value);
-              if (!isOpen) setIsOpen(true);
-            }}
-            onFocus={() => setIsOpen(true)}
-            disabled={catalogModels.length === 0}
-          />
+        <div onClick={() => setIsOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--background)', border: `1px solid ${isOpen ? 'var(--primary)' : 'var(--border)'}`, borderRadius: '10px', padding: '0 12px', height: '40px', width: '100%', boxSizing: 'border-box', cursor: 'text', boxShadow: isOpen ? '0 0 0 2px var(--primary-glow)' : 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}>
+          <Search size={16} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <input type="text" placeholder={catalogModels.length > 0 ? 'Search catalog model...' : 'No catalog — type manually'} value={query} onChange={e => { setQuery(e.target.value); if (!isOpen) setIsOpen(true); }} onFocus={() => setIsOpen(true)} disabled={catalogModels.length === 0} style={{ border: 'none', background: 'transparent', padding: '6px 0', flex: 1, outline: 'none', fontSize: '0.8125rem', color: 'var(--foreground)', minWidth: 0, width: '100%', boxShadow: 'none' }} />
           {query ? (
-            <button type="button" onClick={(e) => { e.stopPropagation(); setQuery(''); }} className="clear-search">✕</button>
+            <button type="button" onClick={e => { e.stopPropagation(); setQuery(''); }} style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}>✕</button>
           ) : (
-            <button
-              type="button"
-              className="catalog-browse-btn"
-              onClick={(e) => { e.stopPropagation(); setIsOpen(prev => !prev); }}
-              title="Browse catalog models"
-            >
-              <ChevronDown size={14} />
-            </button>
+            <button type="button" onClick={e => { e.stopPropagation(); setIsOpen(p => !p); }} style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}><ChevronDown size={14} /></button>
           )}
         </div>
       )}
-
-      {/* Dropdown panel */}
-      {isOpen && !selectedModel && (
-        <div className="catalog-dropdown-panel">
-          <div className="catalog-panel-header">
-            <span>Product Catalog Models ({filteredModels.length})</span>
-            <button type="button" className="close-panel-btn" onClick={() => setIsOpen(false)}>✕</button>
-          </div>
-          <div className="catalog-options-list">
-            <div
-              className={`catalog-option-item ${!selectedId ? 'active' : ''}`}
-              onClick={() => {
-                onSelect('');
-                setIsOpen(false);
-              }}
-            >
-              <div className="option-main">
-                <strong className="text-muted">— Manual Entry (No Catalog) —</strong>
-                <span className="option-specs">Type custom brand, model &amp; specs manually</span>
-              </div>
-            </div>
-
-            {filteredModels.length > 0 ? (
-              filteredModels.map(m => {
-                const isSelected = m.id === selectedId;
-                return (
-                  <div
-                    key={m.id}
-                    className={`catalog-option-item ${isSelected ? 'active' : ''}`}
-                    onClick={() => {
-                      onSelect(m.id);
-                      setIsOpen(false);
-                      setQuery('');
-                    }}
-                  >
-                    <div className="option-main">
-                      <strong>{m.brand} {m.model}</strong>
-                      <span className="option-specs">{m.ram} RAM / {m.storage} Storage • {m.color}</span>
-                    </div>
-                    {isSelected ? (
-                      <span className="added-badge"><Check size={14} /> Selected</span>
-                    ) : (
-                      <button type="button" className="add-item-btn">Select</button>
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="catalog-no-results">
-                No catalog models match &quot;{query}&quot;
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <style jsx>{`
-        .searchable-catalog-select { position: relative; width: 100%; min-width: 180px; }
-        .searchable-catalog-select.dropdown-open { z-index: 99; }
-        
-        .catalog-search-input-wrapper {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: var(--background) !important;
-          border: 1px solid var(--border) !important;
-          border-radius: 10px !important;
-          padding: 0 12px !important;
-          height: 40px !important;
-          width: 100% !important;
-          box-sizing: border-box !important;
-          transition: border-color 0.2s, box-shadow 0.2s;
-          cursor: text;
-        }
-        .catalog-search-input-wrapper:focus-within {
-          border-color: var(--primary) !important;
-          box-shadow: 0 0 0 2px var(--primary-glow) !important;
-        }
-        .search-icon { color: var(--text-muted); flex-shrink: 0; }
-        .catalog-search-input-wrapper input {
-          border: none !important;
-          background: transparent !important;
-          padding: 6px 0 !important;
-          flex: 1 !important;
-          outline: none !important;
-          font-size: 0.8125rem !important;
-          color: var(--foreground) !important;
-          min-width: 0 !important;
-          width: 100% !important;
-          box-shadow: none !important;
-        }
-        .clear-search { color: var(--text-muted); font-size: 0.8125rem; background: none; border: none; cursor: pointer; padding: 2px 4px; }
-        .catalog-browse-btn { color: var(--text-muted); background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; justify-content: center; }
-
-        .catalog-selected-chip {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          padding: 6px 12px;
-          background: var(--primary-light) !important;
-          border: 1px solid var(--primary) !important;
-          border-radius: 10px !important;
-          width: 100% !important;
-          height: 40px !important;
-          box-sizing: border-box !important;
-        }
-        [data-theme="dark"] .catalog-selected-chip { background: rgba(129, 140, 248, 0.15) !important; }
-        .selected-chip-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
-        .selected-chip-info strong { font-size: 0.8125rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .selected-chip-info small { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .clear-catalog-btn { color: var(--text-muted); padding: 3px; border-radius: 4px; flex-shrink: 0; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .clear-catalog-btn:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
-
-        .catalog-dropdown-panel {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
-          background: var(--bg-card) !important;
-          border: 1px solid var(--border) !important;
-          border-radius: 12px !important;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
-          z-index: 100;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          min-width: 220px;
-        }
-
-        .catalog-panel-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 8px 12px;
-          background: var(--bg-active) !important;
-          border-bottom: 1px solid var(--border) !important;
-          font-size: 0.73rem;
-          font-weight: 700;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-        }
-        .close-panel-btn {
-          color: var(--text-muted);
-          font-size: 0.75rem;
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 2px 4px;
-        }
-
-        .catalog-options-list { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-card) !important; }
-        .catalog-option-item { padding: 10px 14px; border-bottom: 1px dashed var(--border) !important; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.15s; font-size: 0.8125rem; gap: 8px; background: var(--bg-card) !important; color: var(--foreground) !important; }
-        .catalog-option-item:last-child { border-bottom: none !important; }
-        .catalog-option-item:hover { background: var(--bg-active) !important; }
-        .catalog-option-item.active { background: var(--primary-light) !important; color: var(--primary) !important; font-weight: 600; }
-        [data-theme="dark"] .catalog-option-item.active { background: rgba(129, 140, 248, 0.15) !important; }
-        
-        .option-main { display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; flex: 1; }
-        .option-main strong { font-size: 0.8125rem; color: var(--foreground) !important; }
-        .option-specs { font-size: 0.72rem; color: var(--text-muted) !important; }
-        
-        .add-item-btn { font-size: 0.75rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 4px 10px; border-radius: 6px; flex-shrink: 0; border: none; cursor: pointer; }
-        [data-theme="dark"] .add-item-btn { background: rgba(129, 140, 248, 0.2); }
-        .added-badge { font-size: 0.75rem; font-weight: 600; color: var(--success); display: flex; align-items: center; gap: 4px; }
-        .catalog-no-results { padding: 16px; text-align: center; font-size: 0.8125rem; color: var(--text-muted); background: var(--bg-card) !important; }
-
-        @media (max-width: 768px) {
-          .catalog-dropdown-panel {
-            position: fixed !important;
-            top: auto !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            max-height: 60vh !important;
-            border-radius: 20px 20px 0 0 !important;
-            z-index: 1000 !important;
-            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.3) !important;
-            background: var(--bg-card) !important;
-          }
-          .catalog-panel-header {
-            padding: 12px 16px !important;
-            font-size: 0.8rem !important;
-          }
-          .catalog-options-list {
-            max-height: 50vh !important;
-          }
-          .catalog-option-item {
-            padding: 12px 16px !important;
-          }
-        }
-      `}</style>
+      {typeof document !== 'undefined' && dropdownContent && createPortal(dropdownContent, document.body)}
     </div>
   );
 }
@@ -864,126 +692,6 @@ export default function PurchasesPage() {
         [data-theme="dark"] .row-from-catalog { background: rgba(129, 140, 248, 0.03); }
         .row-num { color: var(--text-muted); font-size: 0.75rem; text-align: center; }
 
-        /* Searchable Catalog Select & Dropdowns */
-        .searchable-catalog-select { position: relative; width: 100%; min-width: 180px; }
-        
-        .catalog-search-input-wrapper {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: var(--background);
-          border: 1px solid var(--border);
-          border-radius: 10px;
-          padding: 0 12px;
-          height: 38px;
-          width: 100%;
-          box-sizing: border-box;
-          transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .catalog-search-input-wrapper:focus-within {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 2px var(--primary-glow);
-        }
-        .search-icon { color: var(--text-muted); flex-shrink: 0; }
-        .catalog-search-input-wrapper input {
-          border: none;
-          background: transparent;
-          padding: 6px 0;
-          flex: 1;
-          outline: none;
-          font-size: 0.8125rem;
-          color: var(--foreground);
-          min-width: 0;
-          width: 100%;
-        }
-        .clear-search { color: var(--text-muted); font-size: 0.8125rem; background: none; border: none; cursor: pointer; padding: 2px 4px; }
-        .catalog-browse-btn { color: var(--text-muted); background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; justify-content: center; }
-
-        .catalog-selected-chip {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          padding: 6px 12px;
-          background: var(--primary-light);
-          border: 1px solid var(--primary);
-          border-radius: 10px;
-          width: 100%;
-          height: 38px;
-          box-sizing: border-box;
-        }
-        [data-theme="dark"] .catalog-selected-chip { background: rgba(129, 140, 248, 0.12); }
-        .selected-chip-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
-        .selected-chip-info strong { font-size: 0.8125rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .selected-chip-info small { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .clear-catalog-btn { color: var(--text-muted); padding: 3px; border-radius: 4px; flex-shrink: 0; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .clear-catalog-btn:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
-
-        /* Dropdown Overlay & Panel */
-        .catalog-dropdown-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 90;
-          background: rgba(0, 0, 0, 0.35);
-          backdrop-filter: blur(2px);
-        }
-
-        .catalog-dropdown-panel {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
-          background: var(--bg-card) !important;
-          border: 1px solid var(--border);
-          border-radius: 12px;
-          box-shadow: var(--shadow-lg);
-          z-index: 100;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          min-width: 220px;
-        }
-
-        .catalog-panel-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 8px 12px;
-          background: var(--bg-active);
-          border-bottom: 1px solid var(--border);
-          font-size: 0.73rem;
-          font-weight: 700;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-        }
-        .close-panel-btn {
-          color: var(--text-muted);
-          font-size: 0.75rem;
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 2px 4px;
-        }
-
-        .catalog-options-list { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-card); }
-        .catalog-option-item { padding: 10px 14px; border-bottom: 1px dashed var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.15s; font-size: 0.8125rem; gap: 8px; background: var(--bg-card); }
-        .catalog-option-item:last-child { border-bottom: none; }
-        .catalog-option-item:hover { background: var(--bg-active); }
-        .catalog-option-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
-        [data-theme="dark"] .catalog-option-item.active { background: rgba(129, 140, 248, 0.12); }
-        
-        .option-main { display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; flex: 1; }
-        .option-main strong { font-size: 0.8125rem; color: var(--foreground); }
-        .option-specs { font-size: 0.72rem; color: var(--text-muted); }
-        
-        .add-item-btn { font-size: 0.75rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 4px 10px; border-radius: 6px; flex-shrink: 0; border: none; }
-        [data-theme="dark"] .add-item-btn { background: rgba(129, 140, 248, 0.15); }
-        .added-badge { font-size: 0.75rem; font-weight: 600; color: var(--success); display: flex; align-items: center; gap: 4px; }
-        .catalog-no-results { padding: 16px; font-size: 0.8125rem; color: var(--text-muted); text-align: center; background: var(--bg-card); }
 
         /* Table inputs */
         .table-input { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); font-size: 0.8rem; outline: none; box-sizing: border-box; }
@@ -1150,26 +858,7 @@ export default function PurchasesPage() {
             border-radius: 8px;
           }
 
-          /* Make ALL inputs, selects, and interactive elements full width */
-          .searchable-catalog-select {
-            width: 100% !important;
-            min-width: 100% !important;
-          }
-          .catalog-trigger-btn {
-            width: 100% !important;
-          }
-          .catalog-dropdown-panel {
-            position: fixed !important;
-            top: auto !important;
-            bottom: 0;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            max-height: 60vh;
-            border-radius: 20px 20px 0 0 !important;
-            z-index: 100;
-            margin-top: 0;
-          }
+
           .table-input {
             width: 100% !important;
             max-width: 100% !important;
