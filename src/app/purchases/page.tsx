@@ -79,7 +79,7 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
   });
 
   return (
-    <div className="searchable-catalog-select" ref={containerRef}>
+    <div className={`searchable-catalog-select ${isOpen ? 'dropdown-open' : ''}`} ref={containerRef}>
       {/* Selected model display chip */}
       {selectedModel ? (
         <div className="catalog-selected-chip">
@@ -101,7 +101,7 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
         </div>
       ) : (
         /* Search input wrapper */
-        <div className="catalog-search-input-wrapper">
+        <div className="catalog-search-input-wrapper" onClick={() => setIsOpen(true)}>
           <Search size={16} className="search-icon" />
           <input
             type="text"
@@ -109,18 +109,18 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
             value={query}
             onChange={e => {
               setQuery(e.target.value);
-              setIsOpen(true);
+              if (!isOpen) setIsOpen(true);
             }}
             onFocus={() => setIsOpen(true)}
             disabled={catalogModels.length === 0}
           />
           {query ? (
-            <button type="button" onClick={() => setQuery('')} className="clear-search">✕</button>
+            <button type="button" onClick={(e) => { e.stopPropagation(); setQuery(''); }} className="clear-search">✕</button>
           ) : (
             <button
               type="button"
               className="catalog-browse-btn"
-              onClick={() => setIsOpen(prev => !prev)}
+              onClick={(e) => { e.stopPropagation(); setIsOpen(prev => !prev); }}
               title="Browse catalog models"
             >
               <ChevronDown size={14} />
@@ -129,12 +129,7 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
         </div>
       )}
 
-      {/* Dimmed backdrop overlay */}
-      {isOpen && (
-        <div className="catalog-dropdown-overlay" onClick={() => setIsOpen(false)} />
-      )}
-
-      {/* Dropdown panel — Solid background card & bottom sheet on mobile */}
+      {/* Dropdown panel */}
       {isOpen && !selectedModel && (
         <div className="catalog-dropdown-panel">
           <div className="catalog-panel-header">
@@ -191,6 +186,7 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
 
       <style jsx>{`
         .searchable-catalog-select { position: relative; width: 100%; min-width: 180px; }
+        .searchable-catalog-select.dropdown-open { z-index: 99; }
         
         .catalog-search-input-wrapper {
           display: flex;
@@ -204,6 +200,7 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
           width: 100% !important;
           box-sizing: border-box !important;
           transition: border-color 0.2s, box-shadow 0.2s;
+          cursor: text;
         }
         .catalog-search-input-wrapper:focus-within {
           border-color: var(--primary) !important;
@@ -244,18 +241,6 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
         .selected-chip-info small { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .clear-catalog-btn { color: var(--text-muted); padding: 3px; border-radius: 4px; flex-shrink: 0; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .clear-catalog-btn:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
-
-        /* Dropdown Overlay & Panel */
-        .catalog-dropdown-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 90;
-          background: rgba(0, 0, 0, 0.4);
-          backdrop-filter: blur(2px);
-        }
 
         .catalog-dropdown-panel {
           position: absolute;
