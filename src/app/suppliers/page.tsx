@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Truck, Plus, Search, Phone, MapPin, Notebook, DollarSign, PlusCircle, AlertCircle, Trash2, Calendar, FileText, ChevronRight } from 'lucide-react';
+import { Truck, Plus, Search, Notebook, DollarSign, PlusCircle, AlertCircle, Trash2, FileText, ChevronRight, ArrowLeft, Settings } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ToastContainer, ToastMessage } from '@/components/Toast';
 
@@ -43,7 +43,7 @@ export default function SuppliersPage() {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [ledger, setLedger] = useState<LedgerItem[]>([]);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'ledger' | 'quotations' | 'pay' | 'edit'>('ledger');
   const [loadingList, setLoadingList] = useState(true);
@@ -95,7 +95,7 @@ export default function SuppliersPage() {
         const data = await res.json();
         setSuppliers(data.suppliers || []);
       }
-    } catch (err) {
+    } catch {
       addToast('Failed to fetch suppliers.', 'error');
     } finally {
       setLoadingList(false);
@@ -120,7 +120,7 @@ export default function SuppliersPage() {
         setEditNotes(data.supplier.notes || '');
         setEditBalance(data.supplier.balance.toString());
       }
-    } catch (err) {
+    } catch {
       addToast('Failed to load supplier profile details.', 'error');
     } finally {
       setLoadingDetail(false);
@@ -167,7 +167,6 @@ export default function SuppliersPage() {
       if (res.ok && data.success) {
         addToast('Supplier created successfully.', 'success');
         setShowAddModal(false);
-        // Reset inputs
         setNewName('');
         setNewPhone('');
         setNewAddress('');
@@ -177,7 +176,7 @@ export default function SuppliersPage() {
       } else {
         addToast(data.error || 'Failed to create supplier.', 'error');
       }
-    } catch (err) {
+    } catch {
       addToast('Network error creating supplier.', 'error');
     }
   };
@@ -209,7 +208,7 @@ export default function SuppliersPage() {
       } else {
         addToast(data.error || 'Failed to update supplier.', 'error');
       }
-    } catch (err) {
+    } catch {
       addToast('Network error updating supplier.', 'error');
     }
   };
@@ -249,7 +248,7 @@ export default function SuppliersPage() {
       } else {
         addToast(data.error || 'Failed to record payment.', 'error');
       }
-    } catch (err) {
+    } catch {
       addToast('Network error recording payment.', 'error');
     }
   };
@@ -303,7 +302,7 @@ export default function SuppliersPage() {
       } else {
         addToast(data.error || 'Failed to save quotation.', 'error');
       }
-    } catch (err) {
+    } catch {
       addToast('Network error saving quotation.', 'error');
     }
   };
@@ -325,12 +324,12 @@ export default function SuppliersPage() {
       } else {
         addToast(data.error || 'Failed to delete supplier.', 'error');
       }
-    } catch (err) {
+    } catch {
       addToast('Network error deleting supplier.', 'error');
     }
   };
 
-  const filteredSuppliers = suppliers.filter(s => 
+  const filteredSuppliers = suppliers.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.phone.includes(searchQuery)
   );
@@ -338,7 +337,7 @@ export default function SuppliersPage() {
   return (
     <div className="suppliers-page">
       <ToastContainer toasts={toasts} onClose={removeToast} />
-      
+
       <div className="page-layout">
         {/* Left Column - List Panel */}
         <div className={`list-panel ${selectedSupplierId ? 'mobile-hidden' : ''}`}>
@@ -365,8 +364,8 @@ export default function SuppliersPage() {
               </div>
             ) : filteredSuppliers.length ? (
               filteredSuppliers.map(sup => (
-                <div 
-                  key={sup.id} 
+                <div
+                  key={sup.id}
                   className={`supplier-row-card ${selectedSupplierId === sup.id ? 'active' : ''}`}
                   onClick={() => setSelectedSupplierId(sup.id)}
                 >
@@ -395,17 +394,23 @@ export default function SuppliersPage() {
         <div className={`details-panel ${!selectedSupplierId ? 'mobile-hidden' : ''}`}>
           {selectedSupplierId && selectedSupplier ? (
             <div className="supplier-details">
-              <div className="supplier-profile-header">
+
+              {/* Mobile Dedicated Top Back Navigation Bar */}
+              <div className="mobile-detail-topbar">
                 <button className="back-list-btn" onClick={() => setSelectedSupplierId(null)}>
-                  &larr; Back to list
+                  <ArrowLeft size={18} />
+                  <span>Back to Suppliers</span>
                 </button>
+              </div>
+
+              <div className="supplier-profile-header">
                 <div className="header-info">
                   <div className="icon-wrapper">
                     <Truck size={24} />
                   </div>
                   <div>
                     <h3>{selectedSupplier.name}</h3>
-                    <span>Supplier Account</span>
+                    <span>Supplier Account • {selectedSupplier.phone}</span>
                   </div>
                 </div>
                 <div className="header-balance">
@@ -414,19 +419,23 @@ export default function SuppliersPage() {
                 </div>
               </div>
 
-              {/* Navigation Tabs */}
+              {/* Mobile Touch-Friendly Navigation Tabs */}
               <div className="tabs-nav">
                 <button className={`tab-btn ${activeTab === 'ledger' ? 'active' : ''}`} onClick={() => setActiveTab('ledger')}>
-                  Ledger History
+                  <FileText size={14} />
+                  <span>Ledger</span>
                 </button>
                 <button className={`tab-btn ${activeTab === 'quotations' ? 'active' : ''}`} onClick={() => setActiveTab('quotations')}>
-                  Quotations ({quotations.length})
+                  <Notebook size={14} />
+                  <span>Quotations ({quotations.length})</span>
                 </button>
                 <button className={`tab-btn ${activeTab === 'pay' ? 'active' : ''}`} onClick={() => setActiveTab('pay')}>
-                  Pay Cash
+                  <DollarSign size={14} />
+                  <span>Pay Cash</span>
                 </button>
                 <button className={`tab-btn ${activeTab === 'edit' ? 'active' : ''}`} onClick={() => setActiveTab('edit')}>
-                  Edit Details
+                  <Settings size={14} />
+                  <span>Edit Details</span>
                 </button>
               </div>
 
@@ -494,7 +503,9 @@ export default function SuppliersPage() {
                             <div className="quote-cards-stack">
                               {quotations.length ? (
                                 quotations.map(q => {
-                                  const items = JSON.parse(q.details) as any[];
+                                  let items: any[] = [];
+                                  try { items = JSON.parse(q.details) || []; } catch { items = []; }
+
                                   return (
                                     <div key={q.id} className="card quote-item-card">
                                       <div className="quote-card-header">
@@ -530,15 +541,15 @@ export default function SuppliersPage() {
                           {/* Record New Quotation */}
                           <form className="card quote-form-side" onSubmit={handleSaveQuotation}>
                             <h4>Add Supplier Quotation</h4>
-                            
+
                             <div className="input-group">
                               <label>Quotation Title / Batch</label>
-                              <input 
-                                type="text" 
+                              <input
+                                type="text"
                                 placeholder="e.g. Samsung A9 Batch Quotation"
                                 value={quoteTitle}
                                 onChange={e => setQuoteTitle(e.target.value)}
-                                required 
+                                required
                               />
                             </div>
 
@@ -577,15 +588,15 @@ export default function SuppliersPage() {
 
                             <div className="input-group">
                               <label>Notes (Optional)</label>
-                              <textarea 
-                                rows={2} 
+                              <textarea
+                                rows={2}
                                 placeholder="Notes about payment terms or delivery speed"
                                 value={quoteNotes}
                                 onChange={e => setQuoteNotes(e.target.value)}
                               />
                             </div>
 
-                            <button type="submit" className="btn-primary">
+                            <button type="submit" className="btn-primary submit-full-btn">
                               Save Quotation
                             </button>
                           </form>
@@ -599,10 +610,10 @@ export default function SuppliersPage() {
                         <form className="card payment-form" onSubmit={handleRecordPayment}>
                           <h4>Record Payment to Supplier</h4>
                           <p className="text-muted">Enter payments you made to settle outstanding supplier invoices.</p>
-                          
+
                           <div className="input-group">
                             <label>Payment Amount (PKR)</label>
-                            <div className="price-input-wrapper">
+                            <div className="price-input-wrapper big-mobile-input">
                               <span className="currency-symbol">Rs.</span>
                               <input
                                 type="number"
@@ -616,13 +627,18 @@ export default function SuppliersPage() {
 
                           <div className="input-group">
                             <label>Payment Method</label>
-                            <select value={payMethod} onChange={e => setPayMethod(e.target.value as any)}>
-                              <option value="CASH">Cash</option>
-                              <option value="BANK">Bank Transfer</option>
-                              <option value="EASYPAISA">EasyPaisa</option>
-                              <option value="JAZZCASH">JazzCash</option>
-                              <option value="CHEQUE">Cheque</option>
-                            </select>
+                            <div className="method-pill-grid">
+                              {(['CASH', 'BANK', 'EASYPAISA', 'JAZZCASH', 'CHEQUE'] as const).map(m => (
+                                <button
+                                  key={m}
+                                  type="button"
+                                  className={`method-pill ${payMethod === m ? 'active' : ''}`}
+                                  onClick={() => setPayMethod(m)}
+                                >
+                                  {m}
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
                           <div className="input-group">
@@ -635,7 +651,7 @@ export default function SuppliersPage() {
                             />
                           </div>
 
-                          <button type="submit" className="btn-primary">
+                          <button type="submit" className="btn-primary submit-full-btn">
                             Submit Payment Record
                           </button>
                         </form>
@@ -677,8 +693,8 @@ export default function SuppliersPage() {
 
                             <div className="edit-actions">
                               <button type="submit" className="btn-primary">Save Changes</button>
-                              <button 
-                                type="button" 
+                              <button
+                                type="button"
                                 className="btn-secondary delete-btn"
                                 onClick={handleDeleteSupplier}
                               >
@@ -724,7 +740,7 @@ export default function SuppliersPage() {
                     required
                   />
                 </div>
-                
+
                 <div className="input-group">
                   <label>Phone Number</label>
                   <input
@@ -945,23 +961,16 @@ export default function SuppliersPage() {
           height: 100%;
         }
 
+        .mobile-detail-topbar {
+          display: none;
+        }
+
         .supplier-profile-header {
           padding: 24px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           border-bottom: 1px solid var(--border);
-          position: relative;
-        }
-
-        .back-list-btn {
-          display: none;
-          position: absolute;
-          top: 10px;
-          left: 20px;
-          font-size: 0.75rem;
-          font-weight: 700;
-          color: var(--primary);
         }
 
         .header-info {
@@ -1018,6 +1027,9 @@ export default function SuppliersPage() {
         }
 
         .tab-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
           padding: 10px 16px;
           font-size: 0.8125rem;
           font-weight: 600;
@@ -1041,377 +1053,182 @@ export default function SuppliersPage() {
           overflow-y: auto;
         }
 
-        /* Ledger Tab styles */
-        .card-list-header {
-          margin-bottom: 16px;
+        /* Method Pills */
+        .method-pill-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 4px;
         }
-
-        .card-list-header h4 {
-          font-size: 1rem;
-          font-weight: 700;
-        }
-
-        .font-semibold {
+        .method-pill {
+          padding: 10px 16px;
+          border-radius: 10px;
+          border: 1px solid var(--border);
+          background: var(--background);
+          font-size: 0.8125rem;
           font-weight: 600;
+          color: var(--text-muted);
+          transition: all 0.15s;
+        }
+        .method-pill.active {
+          background: var(--primary);
+          color: white;
+          border-color: var(--primary);
+        }
+        .big-mobile-input input {
+          font-size: 1.1rem !important;
+          font-weight: 700 !important;
+        }
+        .submit-full-btn {
+          width: 100%;
+          padding: 12px;
+          justify-content: center;
+          margin-top: 6px;
         }
 
+        /* Ledger Tab styles */
+        .card-list-header { margin-bottom: 16px; }
+        .card-list-header h4 { font-size: 1rem; font-weight: 700; }
+        .font-semibold { font-weight: 600; }
         .text-danger { color: var(--danger); }
         .text-success { color: var(--success); }
 
         /* Quotations tab styles */
-        .quotation-columns {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-        }
-
-        .quote-cards-stack {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          max-height: 480px;
-          overflow-y: auto;
-        }
-
-        .quote-item-card {
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .quote-card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 0.875rem;
-          border-bottom: 1px solid var(--border);
-          padding-bottom: 8px;
-        }
-
-        .quote-card-header strong {
-          font-weight: 700;
-        }
-
-        .quote-card-header span {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-        }
-
-        .quote-mini-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 0.75rem;
-        }
-
-        .quote-mini-table th {
-          text-align: left;
-          color: var(--text-muted);
-          padding-bottom: 6px;
-          border-bottom: 1px solid var(--border);
-        }
-
-        .quote-mini-table td {
-          padding: 6px 0;
-          border-bottom: 1px dashed var(--border);
-        }
-
-        .quote-mini-table tr:last-child td {
-          border-bottom: none;
-        }
-
-        .quote-note {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          background: var(--background);
-          padding: 6px 10px;
-          border-radius: 6px;
-        }
-
-        /* Quotation builder form */
-        .quote-form-side {
-          padding: 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          height: fit-content;
-        }
-
-        .items-builder {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .items-builder label {
-          font-size: 0.8125rem;
-          font-weight: 600;
-        }
-
-        .builder-row {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
-
-        .builder-row input {
-          flex: 1;
-          padding: 8px 10px;
-          border-radius: 8px;
-          border: 1px solid var(--border);
-          font-size: 0.8125rem;
-          background: var(--background);
-          outline: none;
-        }
-
-        .builder-row input:focus {
-          border-color: var(--primary);
-        }
-
-        .builder-row input[type="number"] {
-          flex: 0 0 100px;
-        }
-
-        .remove-row-btn {
-          font-size: 1.5rem;
-          color: var(--text-muted);
-          padding: 0 4px;
-        }
-
-        .remove-row-btn:hover {
-          color: var(--danger);
-        }
-
-        .add-row-btn {
-          padding: 8px;
-          font-size: 0.75rem;
-          border-radius: 8px;
-        }
+        .quotation-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .quote-cards-stack { display: flex; flex-direction: column; gap: 16px; max-height: 480px; overflow-y: auto; }
+        .quote-item-card { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .quote-card-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .quote-card-header strong { font-weight: 700; }
+        .quote-card-header span { font-size: 0.75rem; color: var(--text-muted); }
+        .quote-mini-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        .quote-mini-table th { text-align: left; color: var(--text-muted); padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+        .quote-mini-table td { padding: 6px 0; border-bottom: 1px dashed var(--border); }
+        .quote-mini-table tr:last-child td { border-bottom: none; }
+        .quote-note { font-size: 0.75rem; color: var(--text-muted); background: var(--background); padding: 6px 10px; border-radius: 6px; }
+        .quote-form-side { padding: 20px; display: flex; flex-direction: column; gap: 16px; height: fit-content; }
+        .items-builder { display: flex; flex-direction: column; gap: 10px; }
+        .items-builder label { font-size: 0.8125rem; font-weight: 600; }
+        .builder-row { display: flex; gap: 8px; align-items: center; }
+        .builder-row input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.8125rem; background: var(--background); outline: none; }
+        .builder-row input:focus { border-color: var(--primary); }
+        .builder-row input[type="number"] { flex: 0 0 100px; }
+        .remove-row-btn { font-size: 1.5rem; color: var(--text-muted); padding: 0 4px; }
+        .remove-row-btn:hover { color: var(--danger); }
+        .add-row-btn { padding: 8px; font-size: 0.75rem; border-radius: 8px; }
 
         /* General Forms & inputs */
-        .input-group {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          width: 100%;
-        }
+        .input-group { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+        .input-group label { font-size: 0.8125rem; font-weight: 600; color: var(--foreground); }
+        .input-group input, .input-group select, .input-group textarea { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--background); outline: none; font-size: 0.875rem; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+        .price-input-wrapper { display: flex; align-items: center; background: var(--background); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .price-input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+        .currency-symbol { padding: 0 12px; font-size: 0.875rem; font-weight: 600; color: var(--text-muted); }
+        .price-input-wrapper input { border: none !important; box-shadow: none !important; flex: 1; }
 
-        .input-group label {
-          font-size: 0.8125rem;
-          font-weight: 600;
-          color: var(--foreground);
-        }
+        .edit-form-card { padding: 24px; }
+        .edit-form { display: flex; flex-direction: column; gap: 16px; }
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .warning-text { font-size: 0.75rem; color: var(--warning); display: flex; align-items: center; gap: 4px; margin-top: -2px; }
+        .edit-actions { display: flex; justify-content: space-between; margin-top: 10px; }
+        .delete-btn { color: var(--danger); border-color: rgba(239, 68, 68, 0.2); }
+        .delete-btn:hover { background: var(--danger-light); }
 
-        .input-group input, 
-        .input-group select, 
-        .input-group textarea {
-          padding: 10px 12px;
-          border-radius: 10px;
-          border: 1px solid var(--border);
-          background: var(--background);
-          outline: none;
-          font-size: 0.875rem;
-        }
-
-        .input-group input:focus, 
-        .input-group select:focus, 
-        .input-group textarea:focus {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 2px var(--primary-glow);
-        }
-
-        .price-input-wrapper {
-          display: flex;
-          align-items: center;
-          background: var(--background);
-          border: 1px solid var(--border);
-          border-radius: 10px;
-          overflow: hidden;
-        }
-
-        .price-input-wrapper:focus-within {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 2px var(--primary-glow);
-        }
-
-        .currency-symbol {
-          padding: 0 12px;
-          font-size: 0.875rem;
-          font-weight: 600;
-          color: var(--text-muted);
-        }
-
-        .price-input-wrapper input {
-          border: none !important;
-          box-shadow: none !important;
-          flex: 1;
-        }
-
-        /* Edit and Delete tab styles */
-        .edit-form-card {
-          padding: 24px;
-        }
-
-        .edit-form {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .input-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-        }
-
-        .warning-text {
-          font-size: 0.75rem;
-          color: var(--warning);
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          margin-top: -2px;
-        }
-
-        .edit-actions {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 10px;
-        }
-
-        .delete-btn {
-          color: var(--danger);
-          border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .delete-btn:hover {
-          background: var(--danger-light);
-        }
-
-        /* Spinner */
-        .spinner-center {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          flex: 1;
-        }
-
-        .spinner {
-          width: 24px;
-          height: 24px;
-          border: 2px solid var(--border);
-          border-top-color: var(--primary);
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-
+        .spinner-center { display: flex; align-items: center; justify-content: center; padding: 20px; flex: 1; }
+        .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* Modals */
-        .modal-backdrop {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0,0,0,0.5);
-          backdrop-filter: blur(4px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          padding: 20px;
-        }
+        .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-card { background: var(--bg-card); border: 1px solid var(--border); width: 100%; max-width: 480px; border-radius: 20px; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .modal-header h3 { font-size: 1rem; font-weight: 700; }
+        .close-modal-btn { font-size: 1.5rem; color: var(--text-muted); }
+        .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+        .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
 
-        .modal-card {
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          width: 100%;
-          max-width: 480px;
-          border-radius: 20px;
-          box-shadow: var(--shadow-lg);
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid var(--border);
-        }
-
-        .modal-header h3 {
-          font-size: 1rem;
-          font-weight: 700;
-        }
-
-        .close-modal-btn {
-          font-size: 1.5rem;
-          color: var(--text-muted);
-        }
-
-        .modal-body {
-          padding: 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-        }
-
-        .modal-footer {
-          padding: 16px 20px;
-          border-top: 1px solid var(--border);
-          display: flex;
-          justify-content: flex-end;
-          gap: 10px;
-        }
-
-        /* Responsive Layout details */
+        /* Responsive Mobile layout rules */
         @media (max-width: 768px) {
+          .suppliers-page {
+            height: auto;
+            min-height: calc(100vh - var(--navbar-height) - var(--bottom-nav-height, 60px) - 20px);
+            padding-bottom: 20px;
+          }
           .page-layout {
-            height: calc(100vh - var(--navbar-height) - var(--bottom-nav-height) - 30px);
+            height: auto;
+            border-radius: 12px;
+            flex-direction: column;
           }
-          .list-panel {
-            width: 100%;
-          }
-          .details-panel {
-            width: 100%;
-          }
-          .mobile-hidden {
-            display: none !important;
+          .list-panel { width: 100%; border-right: none; }
+          .details-panel { width: 100%; overflow: visible; }
+          .mobile-hidden { display: none !important; }
+
+          .mobile-detail-topbar {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--bg-active);
+            border-bottom: 1px solid var(--border);
           }
           .back-list-btn {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            background: transparent;
+            border: none;
+            cursor: pointer;
           }
+
           .supplier-profile-header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 14px;
-            padding-top: 36px;
+            gap: 12px;
+            padding: 16px;
           }
           .header-balance {
             text-align: left;
+            width: 100%;
+            background: var(--background);
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
           }
+          .header-balance h2 { font-size: 1.35rem; }
+
+          /* Touch-friendly Pill Tab Nav on Mobile */
           .tabs-nav {
+            display: flex;
             overflow-x: auto;
             white-space: nowrap;
-            padding: 6px 8px 0 8px;
-            gap: 4px;
+            padding: 10px 12px;
+            gap: 8px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
             scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
           }
-          .tabs-nav::-webkit-scrollbar {
-            display: none;
-          }
+          .tabs-nav::-webkit-scrollbar { display: none; }
           .tab-btn {
             flex-shrink: 0;
-            padding: 8px 12px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
           }
-          .quotation-columns {
-            grid-template-columns: 1fr;
+          .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
           }
+
+          .tab-content { padding: 14px; overflow: visible; }
+          .quotation-columns { grid-template-columns: 1fr; }
           .builder-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -1422,32 +1239,12 @@ export default function SuppliersPage() {
             position: relative;
             padding-right: 32px;
           }
-          .builder-row input {
-            width: 100% !important;
-          }
-          .builder-row input[type="number"] {
-            grid-column: span 2;
-            flex: none !important;
-          }
-          .builder-row .remove-row-btn {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            margin: 0;
-            padding: 4px 8px;
-          }
-          .input-grid {
-            grid-template-columns: 1fr;
-          }
-          .edit-actions {
-            flex-direction: column;
-            gap: 12px;
-          }
-          .edit-actions button {
-            width: 100%;
-            justify-content: center;
-          }
+          .builder-row input { width: 100% !important; }
+          .builder-row input[type="number"] { grid-column: span 2; flex: none !important; }
+          .builder-row .remove-row-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); margin: 0; padding: 4px 8px; }
+          .input-grid { grid-template-columns: 1fr; }
+          .edit-actions { flex-direction: column; gap: 12px; }
+          .edit-actions button { width: 100%; justify-content: center; }
         }
       `}</style>
     </div>

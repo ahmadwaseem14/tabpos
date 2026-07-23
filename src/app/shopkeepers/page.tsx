@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Users, Plus, Search, Phone, MapPin, DollarSign, PlusCircle, AlertCircle, Trash2, Calendar, FileText, ChevronRight, Tablet, Undo2 } from 'lucide-react';
+import { Users, Plus, Search, DollarSign, AlertCircle, Trash2, FileText, ChevronRight, Tablet, Undo2, ArrowLeft, Settings } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ToastContainer, ToastMessage } from '@/components/Toast';
 
@@ -108,7 +108,7 @@ export default function ShopkeepersPage() {
         const data = await res.json();
         setShopkeepers(data.shopkeepers || []);
       }
-    } catch (err) {
+    } catch {
       addToast('Failed to fetch shopkeepers list.', 'error');
     } finally {
       setLoadingList(false);
@@ -135,7 +135,7 @@ export default function ShopkeepersPage() {
         setEditBalance(data.shopkeeper.balance.toString());
         setEditNotes(data.shopkeeper.notes || '');
       }
-    } catch (err) {
+    } catch {
       addToast('Failed to load shopkeeper profile.', 'error');
     } finally {
       setLoadingDetail(false);
@@ -184,7 +184,6 @@ export default function ShopkeepersPage() {
       if (res.ok && data.success) {
         addToast('Shopkeeper profile created successfully.', 'success');
         setShowAddModal(false);
-        // Reset inputs
         setNewName('');
         setNewPhone('');
         setNewAddress('');
@@ -196,7 +195,7 @@ export default function ShopkeepersPage() {
       } else {
         addToast(data.error || 'Failed to create shopkeeper.', 'error');
       }
-    } catch (err) {
+    } catch {
       addToast('Network error creating shopkeeper.', 'error');
     }
   };
@@ -230,7 +229,7 @@ export default function ShopkeepersPage() {
       } else {
         addToast(data.error || 'Failed to update shopkeeper.', 'error');
       }
-    } catch (err) {
+    } catch {
       addToast('Network error updating shopkeeper.', 'error');
     }
   };
@@ -270,7 +269,7 @@ export default function ShopkeepersPage() {
       } else {
         addToast(data.error || 'Failed to record payment.', 'error');
       }
-    } catch (err) {
+    } catch {
       addToast('Network error saving payment receipt.', 'error');
     }
   };
@@ -279,7 +278,7 @@ export default function ShopkeepersPage() {
   const openReturnModal = (item: InventoryItem) => {
     setReturnImei(item.imei);
     setReturnModelName(`${item.brand} ${item.model}`);
-    setRefundAmount('0'); // Default refund credit
+    setRefundAmount('0');
     setReturnNotes('');
     setReturnAction('WAREHOUSE');
     setShowReturnModal(true);
@@ -313,7 +312,7 @@ export default function ShopkeepersPage() {
       } else {
         addToast(data.error || 'Failed to return tablet.', 'error');
       }
-    } catch (err) {
+    } catch {
       addToast('Network error processing return.', 'error');
     }
   };
@@ -335,12 +334,12 @@ export default function ShopkeepersPage() {
       } else {
         addToast(data.error || 'Failed to delete shopkeeper.', 'error');
       }
-    } catch (err) {
+    } catch {
       addToast('Network error deleting shopkeeper.', 'error');
     }
   };
 
-  const filteredShopkeepers = shopkeepers.filter(sk => 
+  const filteredShopkeepers = shopkeepers.filter(sk =>
     sk.shopName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     sk.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     sk.phone.includes(searchQuery)
@@ -376,8 +375,8 @@ export default function ShopkeepersPage() {
               </div>
             ) : filteredShopkeepers.length ? (
               filteredShopkeepers.map(sk => (
-                <div 
-                  key={sk.id} 
+                <div
+                  key={sk.id}
                   className={`shopkeeper-row-card ${selectedShopkeeperId === sk.id ? 'active' : ''} ${sk.isOwnShop ? 'own-shop' : ''}`}
                   onClick={() => setSelectedShopkeeperId(sk.id)}
                 >
@@ -411,10 +410,16 @@ export default function ShopkeepersPage() {
         <div className={`details-panel ${!selectedShopkeeperId ? 'mobile-hidden' : ''}`}>
           {selectedShopkeeperId && selectedShopkeeper ? (
             <div className="shopkeeper-details">
-              <div className="shopkeeper-profile-header">
+
+              {/* Mobile Dedicated Top Back Navigation Bar */}
+              <div className="mobile-detail-topbar">
                 <button className="back-list-btn" onClick={() => setSelectedShopkeeperId(null)}>
-                  &larr; Back to list
+                  <ArrowLeft size={18} />
+                  <span>Back to Shopkeepers</span>
                 </button>
+              </div>
+
+              <div className="shopkeeper-profile-header">
                 <div className="header-info">
                   <div className="icon-wrapper">
                     <Users size={24} />
@@ -438,21 +443,25 @@ export default function ShopkeepersPage() {
                 )}
               </div>
 
-              {/* Navigation Tabs */}
+              {/* Mobile Touch-Friendly Navigation Tabs */}
               <div className="tabs-nav">
                 <button className={`tab-btn ${activeTab === 'ledger' ? 'active' : ''}`} onClick={() => setActiveTab('ledger')}>
-                  Ledger History
+                  <FileText size={14} />
+                  <span>Ledger</span>
                 </button>
                 <button className={`tab-btn ${activeTab === 'inventory' ? 'active' : ''}`} onClick={() => setActiveTab('inventory')}>
-                  Stock Inventory ({inventory.length})
+                  <Tablet size={14} />
+                  <span>Stock Inventory ({inventory.length})</span>
                 </button>
                 {!selectedShopkeeper.isOwnShop && (
                   <button className={`tab-btn ${activeTab === 'pay' ? 'active' : ''}`} onClick={() => setActiveTab('pay')}>
-                    Receive Payment
+                    <DollarSign size={14} />
+                    <span>Receive Payment</span>
                   </button>
                 )}
                 <button className={`tab-btn ${activeTab === 'edit' ? 'active' : ''}`} onClick={() => setActiveTab('edit')}>
-                  Edit Profile
+                  <Settings size={14} />
+                  <span>Edit Profile</span>
                 </button>
               </div>
 
@@ -551,8 +560,8 @@ export default function ShopkeepersPage() {
                                     </td>
                                     <td data-label="Date">{formatDate(item.dateSupplied)}</td>
                                     <td data-label="Action">
-                                      <button 
-                                        type="button" 
+                                      <button
+                                        type="button"
                                         className="btn-secondary return-stock-btn"
                                         onClick={() => openReturnModal(item)}
                                       >
@@ -579,10 +588,10 @@ export default function ShopkeepersPage() {
                         <form className="card payment-form" onSubmit={handleRecordPayment}>
                           <h4>Record Payment Received</h4>
                           <p className="text-muted">Log cash payments received from shopkeeper to clear receivables.</p>
-                          
+
                           <div className="input-group">
                             <label>Payment Amount Received (PKR)</label>
-                            <div className="price-input-wrapper">
+                            <div className="price-input-wrapper big-mobile-input">
                               <span className="currency-symbol">Rs.</span>
                               <input
                                 type="number"
@@ -596,13 +605,18 @@ export default function ShopkeepersPage() {
 
                           <div className="input-group">
                             <label>Payment Method</label>
-                            <select value={payMethod} onChange={e => setPayMethod(e.target.value as any)}>
-                              <option value="CASH">Cash</option>
-                              <option value="BANK">Bank Deposit / Transfer</option>
-                              <option value="EASYPAISA">EasyPaisa</option>
-                              <option value="JAZZCASH">JazzCash</option>
-                              <option value="CHEQUE">Cheque</option>
-                            </select>
+                            <div className="method-pill-grid">
+                              {(['CASH', 'BANK', 'EASYPAISA', 'JAZZCASH', 'CHEQUE'] as const).map(m => (
+                                <button
+                                  key={m}
+                                  type="button"
+                                  className={`method-pill ${payMethod === m ? 'active' : ''}`}
+                                  onClick={() => setPayMethod(m)}
+                                >
+                                  {m}
+                                </button>
+                              ))}
+                            </div>
                           </div>
 
                           <div className="input-group">
@@ -615,7 +629,7 @@ export default function ShopkeepersPage() {
                             />
                           </div>
 
-                          <button type="submit" className="btn-primary">
+                          <button type="submit" className="btn-primary submit-full-btn">
                             Save Cash Receipt
                           </button>
                         </form>
@@ -628,7 +642,7 @@ export default function ShopkeepersPage() {
                         <div className="card edit-form-card">
                           <form onSubmit={handleEditShopkeeper} className="edit-form">
                             <h4>Edit Shopkeeper Profile</h4>
-                            
+
                             <div className="input-grid">
                               <div className="input-group">
                                 <label>Shop Name</label>
@@ -673,8 +687,8 @@ export default function ShopkeepersPage() {
                             <div className="edit-actions">
                               <button type="submit" className="btn-primary">Save Changes</button>
                               {!selectedShopkeeper.isOwnShop && (
-                                <button 
-                                  type="button" 
+                                <button
+                                  type="button"
                                   className="btn-secondary delete-btn"
                                   onClick={handleDeleteShopkeeper}
                                 >
@@ -733,7 +747,7 @@ export default function ShopkeepersPage() {
                       required
                     />
                   </div>
-                  
+
                   <div className="input-group">
                     <label>Phone Number</label>
                     <input
@@ -823,7 +837,7 @@ export default function ShopkeepersPage() {
                     required
                   />
                   <span className="text-muted" style={{ fontSize: '0.75rem' }}>
-                    This amount will be deducted (credited) from the shopkeeper's outstanding balance.
+                    This amount will be deducted (credited) from the shopkeeper&apos;s outstanding balance.
                   </span>
                 </div>
 
@@ -1036,23 +1050,16 @@ export default function ShopkeepersPage() {
           height: 100%;
         }
 
+        .mobile-detail-topbar {
+          display: none;
+        }
+
         .shopkeeper-profile-header {
           padding: 24px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           border-bottom: 1px solid var(--border);
-          position: relative;
-        }
-
-        .back-list-btn {
-          display: none;
-          position: absolute;
-          top: 10px;
-          left: 20px;
-          font-size: 0.75rem;
-          font-weight: 700;
-          color: var(--primary);
         }
 
         .header-info {
@@ -1117,6 +1124,9 @@ export default function ShopkeepersPage() {
         }
 
         .tab-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
           padding: 10px 16px;
           font-size: 0.8125rem;
           font-weight: 600;
@@ -1140,20 +1150,43 @@ export default function ShopkeepersPage() {
           overflow-y: auto;
         }
 
-        /* Ledger Tab styles */
-        .card-list-header {
-          margin-bottom: 16px;
+        /* Method Pills */
+        .method-pill-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 4px;
         }
-
-        .card-list-header h4 {
-          font-size: 1rem;
-          font-weight: 700;
-        }
-
-        .font-semibold {
+        .method-pill {
+          padding: 10px 16px;
+          border-radius: 10px;
+          border: 1px solid var(--border);
+          background: var(--background);
+          font-size: 0.8125rem;
           font-weight: 600;
+          color: var(--text-muted);
+          transition: all 0.15s;
+        }
+        .method-pill.active {
+          background: var(--primary);
+          color: white;
+          border-color: var(--primary);
+        }
+        .big-mobile-input input {
+          font-size: 1.1rem !important;
+          font-weight: 700 !important;
+        }
+        .submit-full-btn {
+          width: 100%;
+          padding: 12px;
+          justify-content: center;
+          margin-top: 6px;
         }
 
+        /* Ledger Tab styles */
+        .card-list-header { margin-bottom: 16px; }
+        .card-list-header h4 { font-size: 1rem; font-weight: 700; }
+        .font-semibold { font-weight: 600; }
         .text-warning { color: var(--warning); }
         .text-success { color: var(--success); }
 
@@ -1164,260 +1197,126 @@ export default function ShopkeepersPage() {
           color: var(--danger);
           border-color: rgba(239, 68, 68, 0.1);
         }
-
-        .return-stock-btn:hover {
-          background: var(--danger-light);
-        }
+        .return-stock-btn:hover { background: var(--danger-light); }
 
         /* Forms & inputs */
-        .input-group {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          width: 100%;
-        }
+        .input-group { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+        .input-group label { font-size: 0.8125rem; font-weight: 600; color: var(--foreground); }
+        .input-group input, .input-group select, .input-group textarea { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--background); outline: none; font-size: 0.875rem; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+        .price-input-wrapper { display: flex; align-items: center; background: var(--background); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .price-input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+        .currency-symbol { padding: 0 12px; font-size: 0.875rem; font-weight: 600; color: var(--text-muted); }
+        .price-input-wrapper input { border: none !important; box-shadow: none !important; flex: 1; }
 
-        .input-group label {
-          font-size: 0.8125rem;
-          font-weight: 600;
-          color: var(--foreground);
-        }
+        .edit-form-card { padding: 24px; }
+        .edit-form { display: flex; flex-direction: column; gap: 16px; }
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .warning-text { font-size: 0.75rem; color: var(--warning); display: flex; align-items: center; gap: 4px; margin-top: -2px; }
+        .edit-actions { display: flex; justify-content: space-between; margin-top: 10px; }
+        .delete-btn { color: var(--danger); border-color: rgba(239, 68, 68, 0.2); }
+        .delete-btn:hover { background: var(--danger-light); }
 
-        .input-group input, 
-        .input-group select, 
-        .input-group textarea {
-          padding: 10px 12px;
-          border-radius: 10px;
-          border: 1px solid var(--border);
-          background: var(--background);
-          outline: none;
-          font-size: 0.875rem;
-        }
+        .highlight-banner { display: flex; align-items: center; gap: 8px; background: var(--primary-light); color: var(--primary); padding: 10px 14px; border-radius: 10px; font-size: 0.8125rem; line-height: 1.4; }
+        [data-theme="dark"] .highlight-banner { background: rgba(129, 140, 248, 0.1); }
 
-        .input-group input:focus, 
-        .input-group select:focus, 
-        .input-group textarea:focus {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 2px var(--primary-glow);
-        }
-
-        .price-input-wrapper {
-          display: flex;
-          align-items: center;
-          background: var(--background);
-          border: 1px solid var(--border);
-          border-radius: 10px;
-          overflow: hidden;
-        }
-
-        .price-input-wrapper:focus-within {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 2px var(--primary-glow);
-        }
-
-        .currency-symbol {
-          padding: 0 12px;
-          font-size: 0.875rem;
-          font-weight: 600;
-          color: var(--text-muted);
-        }
-
-        .price-input-wrapper input {
-          border: none !important;
-          box-shadow: none !important;
-          flex: 1;
-        }
-
-        /* Edit and Delete tab styles */
-        .edit-form-card {
-          padding: 24px;
-        }
-
-        .edit-form {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .input-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-        }
-
-        .warning-text {
-          font-size: 0.75rem;
-          color: var(--warning);
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          margin-top: -2px;
-        }
-
-        .edit-actions {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 10px;
-        }
-
-        .delete-btn {
-          color: var(--danger);
-          border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .delete-btn:hover {
-          background: var(--danger-light);
-        }
-
-        /* Highlight banner inside return modal */
-        .highlight-banner {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: var(--primary-light);
-          color: var(--primary);
-          padding: 10px 14px;
-          border-radius: 10px;
-          font-size: 0.8125rem;
-          line-height: 1.4;
-        }
-
-        [data-theme="dark"] .highlight-banner {
-          background: rgba(129, 140, 248, 0.1);
-        }
-
-        /* Spinner */
-        .spinner-center {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          flex: 1;
-        }
-
-        .spinner {
-          width: 24px;
-          height: 24px;
-          border: 2px solid var(--border);
-          border-top-color: var(--primary);
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-
+        .spinner-center { display: flex; align-items: center; justify-content: center; padding: 20px; flex: 1; }
+        .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* Modals */
-        .modal-backdrop {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0,0,0,0.5);
-          backdrop-filter: blur(4px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          padding: 20px;
-        }
-
-        .modal-card {
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          width: 100%;
-          max-width: 480px;
-          border-radius: 20px;
-          box-shadow: var(--shadow-lg);
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-
-        .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid var(--border);
-        }
-
-        .modal-header h3 {
-          font-size: 1rem;
-          font-weight: 700;
-        }
-
-        .close-modal-btn {
-          font-size: 1.5rem;
-          color: var(--text-muted);
-        }
-
-        .modal-body {
-          padding: 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-        }
-
-        .modal-footer {
-          padding: 16px 20px;
-          border-top: 1px solid var(--border);
-          display: flex;
-          justify-content: flex-end;
-          gap: 10px;
-        }
+        .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-card { background: var(--bg-card); border: 1px solid var(--border); width: 100%; max-width: 480px; border-radius: 20px; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .modal-header h3 { font-size: 1rem; font-weight: 700; }
+        .close-modal-btn { font-size: 1.5rem; color: var(--text-muted); }
+        .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+        .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
 
         /* Responsive Layout details */
         @media (max-width: 768px) {
+          .shopkeepers-page {
+            height: auto;
+            min-height: calc(100vh - var(--navbar-height) - var(--bottom-nav-height, 60px) - 20px);
+            padding-bottom: 20px;
+          }
           .page-layout {
-            height: calc(100vh - var(--navbar-height) - var(--bottom-nav-height) - 30px);
+            height: auto;
+            border-radius: 12px;
+            flex-direction: column;
           }
-          .list-panel {
-            width: 100%;
-          }
-          .details-panel {
-            width: 100%;
-          }
-          .mobile-hidden {
-            display: none !important;
+          .list-panel { width: 100%; border-right: none; }
+          .details-panel { width: 100%; overflow: visible; }
+          .mobile-hidden { display: none !important; }
+
+          .mobile-detail-topbar {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--bg-active);
+            border-bottom: 1px solid var(--border);
           }
           .back-list-btn {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            background: transparent;
+            border: none;
+            cursor: pointer;
           }
+
           .shopkeeper-profile-header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 14px;
-            padding-top: 36px;
+            gap: 12px;
+            padding: 16px;
           }
           .header-balance {
             text-align: left;
+            width: 100%;
+            background: var(--background);
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
           }
+          .header-balance h2 { font-size: 1.35rem; }
+
+          /* Touch-friendly Pill Tab Nav on Mobile */
           .tabs-nav {
+            display: flex;
             overflow-x: auto;
             white-space: nowrap;
-            padding: 6px 8px 0 8px;
-            gap: 4px;
+            padding: 10px 12px;
+            gap: 8px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
             scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
           }
-          .tabs-nav::-webkit-scrollbar {
-            display: none;
-          }
+          .tabs-nav::-webkit-scrollbar { display: none; }
           .tab-btn {
             flex-shrink: 0;
-            padding: 8px 12px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
           }
-          .input-grid {
-            grid-template-columns: 1fr;
+          .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
           }
-          .edit-actions {
-            flex-direction: column;
-            gap: 12px;
-          }
-          .edit-actions button {
-            width: 100%;
-            justify-content: center;
-          }
+
+          .tab-content { padding: 14px; overflow: visible; }
+          .input-grid { grid-template-columns: 1fr; }
+          .edit-actions { flex-direction: column; gap: 12px; }
+          .edit-actions button { width: 100%; justify-content: center; }
         }
       `}</style>
     </div>

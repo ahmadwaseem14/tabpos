@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { ShoppingCart, Plus, ScanLine, X, FileText, Truck, BookOpen, ChevronDown } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { ShoppingCart, Plus, ScanLine, X, FileText, Truck, BookOpen, Search, Check, ChevronDown } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ToastContainer, ToastMessage } from '@/components/Toast';
 import MobileScanner from '@/components/MobileScanner';
@@ -41,6 +41,143 @@ interface TabletEntry {
 
 function createBlankTablet(): TabletEntry {
   return { catalogModelId: '', imei: '', serialNumber: '', brand: 'Samsung', model: '', ram: '4GB', storage: '64GB', color: 'Black', purchasePrice: '', quantity: '1' };
+}
+
+interface SearchableCatalogSelectProps {
+  catalogModels: CatalogModel[];
+  selectedId: string;
+  onSelect: (modelId: string) => void;
+}
+
+function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: SearchableCatalogSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selectedModel = catalogModels.find(m => m.id === selectedId);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredModels = catalogModels.filter(m => {
+    const q = query.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      m.brand.toLowerCase().includes(q) ||
+      m.model.toLowerCase().includes(q) ||
+      m.ram.toLowerCase().includes(q) ||
+      m.storage.toLowerCase().includes(q) ||
+      m.color.toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="searchable-catalog-select" ref={containerRef}>
+      <button
+        type="button"
+        className={`catalog-trigger-btn ${selectedModel ? 'selected' : ''}`}
+        onClick={() => setIsOpen(prev => !prev)}
+      >
+        <span className="trigger-text">
+          {selectedModel ? (
+            <>
+              <strong>{selectedModel.brand} {selectedModel.model}</strong>
+              <small> ({selectedModel.ram}/{selectedModel.storage}) {selectedModel.color}</small>
+            </>
+          ) : (
+            <span className="placeholder-text">— Select from Catalog —</span>
+          )}
+        </span>
+        <div className="trigger-actions">
+          {selectedModel ? (
+            <span
+              className="clear-catalog-btn"
+              title="Clear selection"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect('');
+                setQuery('');
+              }}
+            >
+              <X size={13} />
+            </span>
+          ) : (
+            <ChevronDown size={14} className="chevron-icon" />
+          )}
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="catalog-dropdown-panel">
+          <div className="catalog-search-wrapper">
+            <Search size={14} className="search-icon" />
+            <input
+              type="text"
+              className="catalog-search-input"
+              placeholder="Search brand, model, RAM, storage..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              autoFocus
+            />
+            {query && (
+              <button
+                type="button"
+                className="clear-query-btn"
+                onClick={() => setQuery('')}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <div className="catalog-options-list">
+            <div
+              className={`catalog-option-item ${!selectedId ? 'active' : ''}`}
+              onClick={() => {
+                onSelect('');
+                setIsOpen(false);
+              }}
+            >
+              <span className="option-title text-muted">— None (Custom Manual Entry) —</span>
+            </div>
+
+            {filteredModels.length > 0 ? (
+              filteredModels.map(m => {
+                const isSelected = m.id === selectedId;
+                return (
+                  <div
+                    key={m.id}
+                    className={`catalog-option-item ${isSelected ? 'active' : ''}`}
+                    onClick={() => {
+                      onSelect(m.id);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <div className="option-main">
+                      <strong>{m.brand} {m.model}</strong>
+                      <span className="option-specs">{m.ram} RAM / {m.storage} Storage • {m.color}</span>
+                    </div>
+                    {isSelected && <Check size={14} className="check-icon" />}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="catalog-no-results">
+                No catalog models match &quot;{query}&quot;
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function PurchasesPage() {
@@ -130,7 +267,9 @@ export default function PurchasesPage() {
     addToast(`Scanned IMEI: ${code}`, 'success');
   };
 
-  const subtotal = tablets.reduce((s, t) => s + (parseFloat(t.purchasePrice) || 0), 0);
+  // Calculations (multiplied by quantity for line totals & subtotal)
+  const subtotal = tablets.reduce((s, t) => s + (parseFloat(t.purchasePrice) || 0) * (parseInt(t.quantity) || 0), 0);
+  const totalPieces = tablets.reduce((sum, t) => sum + (parseInt(t.quantity) || 0), 0);
   const totalAmount = subtotal + (parseFloat(tax) || 0) + (parseFloat(freight) || 0) + (parseFloat(extraCharges) || 0) - (parseFloat(discount) || 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,7 +320,7 @@ export default function PurchasesPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        addToast(`✓ Purchase recorded! ${tablets.length} tablets added to warehouse. Invoice: ${data.invoiceNo}`, 'success');
+        addToast(`✓ Purchase recorded! ${totalPieces} tablets added to warehouse. Invoice: ${data.invoiceNo}`, 'success');
         setTablets([createBlankTablet()]);
         setInvoiceRef(''); setNotes(''); setTax('0'); setDiscount('0'); setFreight('0'); setExtraCharges('0');
         loadData();
@@ -192,13 +331,6 @@ export default function PurchasesPage() {
     } catch { addToast('Network error.', 'error'); }
     finally { setSubmitting(false); }
   };
-
-  // Group catalog by brand for the dropdown
-  const catalogByBrand = catalogModels.reduce((acc: Record<string, CatalogModel[]>, m) => {
-    if (!acc[m.brand]) acc[m.brand] = [];
-    acc[m.brand].push(m);
-    return acc;
-  }, {});
 
   return (
     <div className="purchases-page">
@@ -272,7 +404,9 @@ export default function PurchasesPage() {
             <div className="tablets-header">
               <div className="tablets-header-left">
                 <h4>Tablet Entries</h4>
-                <span className="entry-count">{tablets.length} item{tablets.length !== 1 ? 's' : ''}</span>
+                <span className="entry-count">
+                  {tablets.length} row{tablets.length !== 1 ? 's' : ''} ({totalPieces} pc{totalPieces !== 1 ? 's' : ''})
+                </span>
               </div>
               <div className="tablets-header-right">
                 {catalogModels.length > 0 && (
@@ -291,10 +425,10 @@ export default function PurchasesPage() {
                 <thead>
                   <tr>
                     <th style={{ width: 32 }}>#</th>
-                    <th>
+                    <th style={{ minWidth: 200 }}>
                       <div className="th-with-icon">
                         <BookOpen size={12} />
-                        <span>From Catalog</span>
+                        <span>Search Catalog</span>
                       </div>
                     </th>
                     <th>
@@ -303,164 +437,170 @@ export default function PurchasesPage() {
                         <span className="optional-text">(Optional)</span>
                       </div>
                     </th>
-                    <th style={{ width: 80 }}>Qty <span className="req">*</span></th>
+                    <th style={{ width: 75 }}>Qty <span className="req">*</span></th>
                     <th>Serial #</th>
                     <th>Brand <span className="req">*</span></th>
                     <th>Model <span className="req">*</span></th>
                     <th>RAM</th>
                     <th>Storage</th>
                     <th>Color</th>
-                    <th>Purchase Price <span className="req">*</span></th>
+                    <th>Unit Price <span className="req">*</span></th>
+                    <th>Line Total</th>
                     <th style={{ width: 36 }}></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {tablets.map((tab, idx) => (
-                    <tr key={idx} className={tab.catalogModelId ? 'row-from-catalog' : ''}>
-                      <td className="row-num" data-item-num={idx + 1}>#{idx + 1}</td>
+                  {tablets.map((tab, idx) => {
+                    const rowQty = parseInt(tab.quantity) || 0;
+                    const rowUnitPrice = parseFloat(tab.purchasePrice) || 0;
+                    const rowLineTotal = rowQty * rowUnitPrice;
 
-                      {/* Catalog Model Selector */}
-                      <td data-label="From Catalog">
-                        <select
-                          className={`catalog-select ${tab.catalogModelId ? 'selected' : ''}`}
-                          value={tab.catalogModelId}
-                          onChange={e => selectCatalogModel(idx, e.target.value)}
-                        >
-                          <option value="">— Select or type below —</option>
-                          {Object.entries(catalogByBrand).map(([brandName, models]) => (
-                            <optgroup key={brandName} label={brandName}>
-                              {models.map(m => (
-                                <option key={m.id} value={m.id}>
-                                  {m.model} ({m.ram}/{m.storage}) {m.color}
-                                </option>
-                              ))}
-                            </optgroup>
-                          ))}
-                        </select>
-                      </td>
+                    return (
+                      <tr key={idx} className={tab.catalogModelId ? 'row-from-catalog' : ''}>
+                        <td className="row-num" data-item-num={idx + 1}>#{idx + 1}</td>
 
-                      {/* IMEI */}
-                      <td data-label="IMEI (Optional)">
-                        <div className="imei-cell">
-                          <input
-                            type="text"
-                            value={tab.imei}
-                            onChange={e => updateTablet(idx, 'imei', e.target.value)}
-                            placeholder="Optional"
-                            className="table-input imei-input"
-                            disabled={parseInt(tab.quantity) > 1}
-                            title={parseInt(tab.quantity) > 1 ? "IMEI is auto-generated when quantity > 1" : ""}
+                        {/* Searchable Catalog Model Selector */}
+                        <td data-label="Search Catalog">
+                          <SearchableCatalogSelect
+                            catalogModels={catalogModels}
+                            selectedId={tab.catalogModelId}
+                            onSelect={(modelId) => selectCatalogModel(idx, modelId)}
                           />
-                          <button type="button" className="scan-cell-btn" onClick={() => openScannerFor(idx)} disabled={parseInt(tab.quantity) > 1} title="Scan IMEI">
-                            <ScanLine size={14} />
-                          </button>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Quantity */}
-                      <td data-label="Qty *">
-                        <input 
-                          type="number" 
-                          value={tab.quantity} 
-                          onChange={e => updateTablet(idx, 'quantity', e.target.value)} 
-                          min="1" 
-                          className="table-input qty-input" 
-                          required 
-                        />
-                      </td>
+                        {/* IMEI */}
+                        <td data-label="IMEI (Optional)">
+                          <div className="imei-cell">
+                            <input
+                              type="text"
+                              value={tab.imei}
+                              onChange={e => updateTablet(idx, 'imei', e.target.value)}
+                              placeholder="Optional"
+                              className="table-input imei-input"
+                              disabled={rowQty > 1}
+                              title={rowQty > 1 ? "IMEI is auto-generated when quantity > 1" : ""}
+                            />
+                            <button type="button" className="scan-cell-btn" onClick={() => openScannerFor(idx)} disabled={rowQty > 1} title="Scan IMEI">
+                              <ScanLine size={14} />
+                            </button>
+                          </div>
+                        </td>
 
-                      {/* Serial # */}
-                      <td data-label="Serial #">
-                        <input 
-                          type="text" 
-                          value={tab.serialNumber} 
-                          onChange={e => updateTablet(idx, 'serialNumber', e.target.value)} 
-                          placeholder="Optional" 
-                          className="table-input sn-input" 
-                          disabled={parseInt(tab.quantity) > 1}
-                        />
-                      </td>
-
-                      {/* Brand — auto-filled if catalog selected, but still editable */}
-                      <td data-label="Brand *">
-                        <input
-                          type="text"
-                          value={tab.brand}
-                          onChange={e => updateTablet(idx, 'brand', e.target.value)}
-                          className={`table-input brand-input ${tab.catalogModelId ? 'auto-filled' : ''}`}
-                          placeholder="Brand"
-                          required
-                        />
-                      </td>
-
-                      {/* Model */}
-                      <td data-label="Model *">
-                        <input
-                          type="text"
-                          value={tab.model}
-                          onChange={e => updateTablet(idx, 'model', e.target.value)}
-                          placeholder="e.g. Galaxy A55"
-                          className={`table-input model-input ${tab.catalogModelId ? 'auto-filled' : ''}`}
-                          required
-                        />
-                      </td>
-
-                      {/* RAM */}
-                      <td data-label="RAM">
-                        <input
-                          type="text"
-                          value={tab.ram}
-                          onChange={e => updateTablet(idx, 'ram', e.target.value)}
-                          className={`table-input spec-input ${tab.catalogModelId ? 'auto-filled' : ''}`}
-                          placeholder="4GB"
-                        />
-                      </td>
-
-                      {/* Storage */}
-                      <td data-label="Storage">
-                        <input
-                          type="text"
-                          value={tab.storage}
-                          onChange={e => updateTablet(idx, 'storage', e.target.value)}
-                          className={`table-input spec-input ${tab.catalogModelId ? 'auto-filled' : ''}`}
-                          placeholder="64GB"
-                        />
-                      </td>
-
-                      {/* Color */}
-                      <td data-label="Color">
-                        <input
-                          type="text"
-                          value={tab.color}
-                          onChange={e => updateTablet(idx, 'color', e.target.value)}
-                          className={`table-input spec-input ${tab.catalogModelId ? 'auto-filled' : ''}`}
-                          placeholder="Black"
-                        />
-                      </td>
-
-                      {/* Purchase Price */}
-                      <td data-label="Purchase Price *">
-                        <div className="price-cell">
-                          <span>Rs.</span>
+                        {/* Quantity */}
+                        <td data-label="Qty *">
                           <input
                             type="number"
-                            value={tab.purchasePrice}
-                            onChange={e => updateTablet(idx, 'purchasePrice', e.target.value)}
-                            placeholder="0"
-                            className="price-input"
+                            value={tab.quantity}
+                            onChange={e => updateTablet(idx, 'quantity', e.target.value)}
+                            min="1"
+                            className="table-input qty-input"
                             required
                           />
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Remove */}
-                      <td data-label="Actions">
-                        <button type="button" className="remove-row-btn" onClick={() => removeTablet(idx)} disabled={tablets.length === 1}>
-                          <X size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        {/* Serial # */}
+                        <td data-label="Serial #">
+                          <input
+                            type="text"
+                            value={tab.serialNumber}
+                            onChange={e => updateTablet(idx, 'serialNumber', e.target.value)}
+                            placeholder="Optional"
+                            className="table-input sn-input"
+                            disabled={rowQty > 1}
+                          />
+                        </td>
+
+                        {/* Brand */}
+                        <td data-label="Brand *">
+                          <input
+                            type="text"
+                            value={tab.brand}
+                            onChange={e => updateTablet(idx, 'brand', e.target.value)}
+                            className={`table-input brand-input ${tab.catalogModelId ? 'auto-filled' : ''}`}
+                            placeholder="Brand"
+                            required
+                          />
+                        </td>
+
+                        {/* Model */}
+                        <td data-label="Model *">
+                          <input
+                            type="text"
+                            value={tab.model}
+                            onChange={e => updateTablet(idx, 'model', e.target.value)}
+                            placeholder="e.g. Galaxy A55"
+                            className={`table-input model-input ${tab.catalogModelId ? 'auto-filled' : ''}`}
+                            required
+                          />
+                        </td>
+
+                        {/* RAM */}
+                        <td data-label="RAM">
+                          <input
+                            type="text"
+                            value={tab.ram}
+                            onChange={e => updateTablet(idx, 'ram', e.target.value)}
+                            className={`table-input spec-input ${tab.catalogModelId ? 'auto-filled' : ''}`}
+                            placeholder="4GB"
+                          />
+                        </td>
+
+                        {/* Storage */}
+                        <td data-label="Storage">
+                          <input
+                            type="text"
+                            value={tab.storage}
+                            onChange={e => updateTablet(idx, 'storage', e.target.value)}
+                            className={`table-input spec-input ${tab.catalogModelId ? 'auto-filled' : ''}`}
+                            placeholder="64GB"
+                          />
+                        </td>
+
+                        {/* Color */}
+                        <td data-label="Color">
+                          <input
+                            type="text"
+                            value={tab.color}
+                            onChange={e => updateTablet(idx, 'color', e.target.value)}
+                            className={`table-input spec-input ${tab.catalogModelId ? 'auto-filled' : ''}`}
+                            placeholder="Black"
+                          />
+                        </td>
+
+                        {/* Unit Purchase Price */}
+                        <td data-label="Unit Price *">
+                          <div className="price-cell">
+                            <span>Rs.</span>
+                            <input
+                              type="number"
+                              value={tab.purchasePrice}
+                              onChange={e => updateTablet(idx, 'purchasePrice', e.target.value)}
+                              placeholder="0"
+                              className="price-input"
+                              required
+                            />
+                          </div>
+                        </td>
+
+                        {/* Live Line Total (Qty x Price) */}
+                        <td data-label="Line Total">
+                          <div className="line-total-display">
+                            <strong>{formatCurrency(rowLineTotal)}</strong>
+                            {rowQty > 1 && rowUnitPrice > 0 && (
+                              <small className="qty-breakdown">{rowQty} × {formatCurrency(rowUnitPrice)}</small>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Remove */}
+                        <td data-label="Actions">
+                          <button type="button" className="remove-row-btn" onClick={() => removeTablet(idx)} disabled={tablets.length === 1}>
+                            <X size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -468,7 +608,7 @@ export default function PurchasesPage() {
             <div className="form-footer">
               <div className="totals">
                 <div className="total-item">
-                  <span>Subtotal</span>
+                  <span>Subtotal ({totalPieces} pc{totalPieces !== 1 ? 's' : ''})</span>
                   <strong>{formatCurrency(subtotal)}</strong>
                 </div>
                 {(parseFloat(tax) || parseFloat(freight) || parseFloat(extraCharges) || parseFloat(discount)) ? (
@@ -484,7 +624,7 @@ export default function PurchasesPage() {
               </div>
               <button type="submit" className="btn-primary submit-btn" disabled={submitting}>
                 <ShoppingCart size={18} />
-                <span>{submitting ? 'Saving...' : `Record Purchase — ${tablets.length} Tablet${tablets.length !== 1 ? 's' : ''}`}</span>
+                <span>{submitting ? 'Saving...' : `Record Purchase — ${totalPieces} Tablet${totalPieces !== 1 ? 's' : ''}`}</span>
               </button>
             </div>
           </div>
@@ -556,7 +696,7 @@ export default function PurchasesPage() {
         .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
 
         /* Tablets card */
-        .tablets-card { overflow: hidden; }
+        .tablets-card { overflow: visible; }
         .tablets-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
         .tablets-header-left { display: flex; align-items: center; gap: 10px; }
         .tablets-header-left h4 { font-size: 0.95rem; font-weight: 700; }
@@ -578,162 +718,60 @@ export default function PurchasesPage() {
         [data-theme="dark"] .row-from-catalog { background: rgba(129, 140, 248, 0.03); }
         .row-num { color: var(--text-muted); font-size: 0.75rem; text-align: center; }
 
-        @media (max-width: 768px) {
-          .view-tabs {
-            width: 100%;
-          }
-          .view-tab {
-            flex: 1;
-            justify-content: center;
-          }
-          .catalog-hint {
-            flex-direction: column;
-            align-items: stretch;
-            text-align: center;
-          }
-          .catalog-hint svg {
-            margin: 0 auto;
-          }
-          .catalog-link {
-            text-align: center;
-          }
-          .header-card {
-            padding: 16px;
-          }
-          .tablets-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 16px;
-          }
-          .tablets-header-right {
-            width: 100%;
-            justify-content: space-between;
-          }
-          .tablets-scroll { overflow-x: visible; padding: 12px; }
-          .entry-table, .entry-table tbody, .entry-table tr, .entry-table td {
-            display: block;
-            width: 100%;
-          }
-          .entry-table thead {
-            display: none;
-          }
-          .entry-table tr {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
-            position: relative;
-            box-shadow: var(--shadow-sm);
-          }
-          .entry-table td {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            padding: 0 !important;
-            border-bottom: none !important;
-          }
-          .entry-table td:nth-child(1) {
-            display: flex !important;
-            font-weight: 700;
-            font-size: 0.875rem;
-            color: var(--primary);
-            border-bottom: 1px solid var(--border) !important;
-            padding-bottom: 8px !important;
-            margin-bottom: 4px;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-          }
-          .entry-table td:nth-child(1)::before {
-            content: "Item #" attr(data-item-num);
-            color: var(--foreground);
-            font-weight: 700;
-          }
-          .entry-table td:last-child {
-            position: absolute;
-            top: 12px;
-            right: 14px;
-            border: none !important;
-            padding: 0 !important;
-            width: auto !important;
-            z-index: 10;
-          }
-          .entry-table td:last-child::before {
-            display: none !important;
-          }
-          .remove-row-btn {
-            opacity: 0.9;
-            background: var(--danger-light);
-            padding: 8px;
-            border-radius: 8px;
-          }
-          .entry-table td::before {
-            content: attr(data-label);
-            font-weight: 700;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-          .catalog-select, .table-input, .imei-cell, .price-cell {
-            width: 100% !important;
-            max-width: 100% !important;
-            min-width: 100% !important;
-            box-sizing: border-box;
-          }
-          .price-input {
-            width: 100% !important;
-          }
-          .header-row { grid-template-columns: 1fr; }
-          .charges-row { grid-template-columns: 1fr 1fr; }
-          .form-footer {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 16px;
-            padding: 16px;
-          }
-          .totals {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 10px;
-          }
-          .total-item {
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-          }
-          .submit-btn {
-            width: 100%;
-            justify-content: center;
-          }
-        }
+        /* Searchable Catalog Select Styles */
+        .searchable-catalog-select { position: relative; width: 100%; min-width: 190px; }
+        .catalog-trigger-btn { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); font-size: 0.8rem; text-align: left; transition: all 0.15s; outline: none; }
+        .catalog-trigger-btn:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+        .catalog-trigger-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 500; }
+        [data-theme="dark"] .catalog-trigger-btn.selected { background: rgba(129,140,248,0.1); }
+        .trigger-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        .trigger-text small { color: var(--text-muted); font-size: 0.73rem; }
+        .placeholder-text { color: var(--text-muted); font-weight: normal; }
+        .trigger-actions { display: flex; align-items: center; flex-shrink: 0; }
+        .chevron-icon { color: var(--text-muted); }
+        .clear-catalog-btn { display: inline-flex; align-items: center; justify-content: center; padding: 2px; border-radius: 4px; color: var(--text-muted); transition: background 0.15s; }
+        .clear-catalog-btn:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
-        /* Catalog select */
-        .catalog-select { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); font-size: 0.8rem; outline: none; min-width: 180px; max-width: 220px; }
-        .catalog-select.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
-        [data-theme="dark"] .catalog-select.selected { background: rgba(129,140,248,0.1); }
-        .catalog-select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+        .catalog-dropdown-panel { position: absolute; top: calc(100% + 4px); left: 0; width: 260px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 50; display: flex; flex-direction: column; overflow: hidden; }
+        .catalog-search-wrapper { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); background: var(--bg-active); }
+        .search-icon { color: var(--text-muted); flex-shrink: 0; }
+        .catalog-search-input { border: none; background: transparent; flex: 1; outline: none; font-size: 0.8rem; min-width: 0; }
+        .clear-query-btn { color: var(--text-muted); font-size: 0.75rem; padding: 2px 4px; }
+
+        .catalog-options-list { max-height: 210px; overflow-y: auto; display: flex; flex-direction: column; }
+        .catalog-option-item { padding: 8px 12px; border-bottom: 1px dashed var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.15s; font-size: 0.8rem; }
+        .catalog-option-item:last-child { border-bottom: none; }
+        .catalog-option-item:hover { background: var(--bg-active); }
+        .catalog-option-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+        [data-theme="dark"] .catalog-option-item.active { background: rgba(129,140,248,0.12); }
+        .option-main { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+        .option-specs { font-size: 0.72rem; color: var(--text-muted); }
+        .catalog-no-results { padding: 14px; font-size: 0.78rem; color: var(--text-muted); text-align: center; }
+        .check-icon { color: var(--primary); flex-shrink: 0; }
+        .text-muted { color: var(--text-muted); }
 
         /* Table inputs */
         .table-input { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); font-size: 0.8rem; outline: none; }
         .table-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
-        .imei-input { width: 148px; font-family: monospace; font-size: 0.75rem; }
-        .sn-input { width: 100px; }
-        .brand-input { width: 90px; }
-        .model-input { width: 130px; }
-        .spec-input { width: 70px; text-align: center; }
+        .imei-input { width: 135px; font-family: monospace; font-size: 0.75rem; }
+        .qty-input { width: 65px; text-align: center; }
+        .sn-input { width: 95px; }
+        .brand-input { width: 85px; }
+        .model-input { width: 120px; }
+        .spec-input { width: 65px; text-align: center; }
         .auto-filled { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
         [data-theme="dark"] .auto-filled { background: rgba(129,140,248,0.08); }
         .imei-cell { display: flex; gap: 5px; align-items: center; }
         .scan-cell-btn { padding: 7px 9px; border-radius: 8px; background: var(--primary); color: white; flex-shrink: 0; }
-        .price-cell { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 120px; }
+        .price-cell { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 110px; }
         .price-cell span { padding: 7px 7px; font-size: 0.7rem; background: var(--bg-active); border-right: 1px solid var(--border); color: var(--text-muted); }
-        .price-input { border: none; background: transparent; padding: 7px 7px; flex: 1; min-width: 0; outline: none; font-size: 0.875rem; font-weight: 600; }
+        .price-input { border: none; background: transparent; padding: 7px 7px; flex: 1; min-width: 0; outline: none; font-size: 0.85rem; font-weight: 600; }
+
+        /* Line Total Display */
+        .line-total-display { display: flex; flex-direction: column; font-size: 0.85rem; white-space: nowrap; }
+        .line-total-display strong { color: var(--primary); font-weight: 700; }
+        .qty-breakdown { font-size: 0.68rem; color: var(--text-muted); font-weight: normal; }
+
         .remove-row-btn { padding: 7px; border-radius: 8px; color: var(--danger); opacity: 0.4; }
         .remove-row-btn:hover { opacity: 1; background: var(--danger-light); }
         .remove-row-btn:disabled { opacity: 0.15; cursor: not-allowed; }
@@ -747,6 +785,38 @@ export default function PurchasesPage() {
         .total-item.grand strong { font-size: 1.15rem; color: var(--primary); }
         .submit-btn { display: flex; align-items: center; gap: 10px; padding: 13px 24px; border-radius: 12px; font-size: 0.9rem; }
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Mobile layout */
+        @media (max-width: 768px) {
+          .view-tabs { width: 100%; }
+          .view-tab { flex: 1; justify-content: center; }
+          .catalog-hint { flex-direction: column; align-items: stretch; text-align: center; }
+          .catalog-hint svg { margin: 0 auto; }
+          .catalog-link { text-align: center; }
+          .header-card { padding: 16px; }
+          .tablets-header { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+          .tablets-header-right { width: 100%; justify-content: space-between; }
+          .tablets-scroll { overflow-x: visible; padding: 12px; }
+          .entry-table, .entry-table tbody, .entry-table tr, .entry-table td { display: block; width: 100%; }
+          .entry-table thead { display: none; }
+          .entry-table tr { display: flex; flex-direction: column; gap: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative; box-shadow: var(--shadow-sm); }
+          .entry-table td { display: flex; flex-direction: column; gap: 5px; padding: 0 !important; border-bottom: none !important; }
+          .entry-table td:nth-child(1) { display: flex !important; font-weight: 700; font-size: 0.875rem; color: var(--primary); border-bottom: 1px solid var(--border) !important; padding-bottom: 8px !important; margin-bottom: 4px; flex-direction: row; justify-content: space-between; align-items: center; }
+          .entry-table td:nth-child(1)::before { content: "Item #" attr(data-item-num); color: var(--foreground); font-weight: 700; }
+          .entry-table td:last-child { position: absolute; top: 12px; right: 14px; border: none !important; padding: 0 !important; width: auto !important; z-index: 10; }
+          .entry-table td:last-child::before { display: none !important; }
+          .remove-row-btn { opacity: 0.9; background: var(--danger-light); padding: 8px; border-radius: 8px; }
+          .entry-table td::before { content: attr(data-label); font-weight: 700; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+          .searchable-catalog-select, .catalog-dropdown-panel, .table-input, .imei-cell, .price-cell { width: 100% !important; max-width: 100% !important; min-width: 100% !important; box-sizing: border-box; }
+          .catalog-dropdown-panel { position: static; margin-top: 6px; }
+          .price-input { width: 100% !important; }
+          .header-row { grid-template-columns: 1fr; }
+          .charges-row { grid-template-columns: 1fr 1fr; }
+          .form-footer { flex-direction: column; align-items: stretch; gap: 16px; padding: 16px; }
+          .totals { flex-direction: column; align-items: stretch; gap: 10px; }
+          .total-item { flex-direction: row; justify-content: space-between; align-items: center; }
+          .submit-btn { width: 100%; justify-content: center; }
+        }
 
         /* History */
         .history-card { padding: 20px; }
