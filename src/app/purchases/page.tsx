@@ -80,63 +80,63 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
 
   return (
     <div className="searchable-catalog-select" ref={containerRef}>
-      <button
-        type="button"
-        className={`catalog-trigger-btn ${selectedModel ? 'selected' : ''}`}
-        onClick={() => setIsOpen(prev => !prev)}
-      >
-        <span className="trigger-text">
-          {selectedModel ? (
-            <>
-              <strong>{selectedModel.brand} {selectedModel.model}</strong>
-              <small> ({selectedModel.ram}/{selectedModel.storage}) {selectedModel.color}</small>
-            </>
-          ) : (
-            <span className="placeholder-text">— Select from Catalog —</span>
-          )}
-        </span>
-        <div className="trigger-actions">
-          {selectedModel ? (
-            <span
-              className="clear-catalog-btn"
-              title="Clear selection"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect('');
-                setQuery('');
-              }}
-            >
-              <X size={13} />
-            </span>
-          ) : (
-            <ChevronDown size={14} className="chevron-icon" />
-          )}
-        </div>
-      </button>
-
-      {isOpen && (
-        <div className="catalog-dropdown-panel">
-          <div className="catalog-search-wrapper">
-            <Search size={14} className="search-icon" />
-            <input
-              type="text"
-              className="catalog-search-input"
-              placeholder="Search brand, model, RAM, storage..."
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              autoFocus
-            />
-            {query && (
-              <button
-                type="button"
-                className="clear-query-btn"
-                onClick={() => setQuery('')}
-              >
-                ✕
-              </button>
-            )}
+      {/* Selected model display chip */}
+      {selectedModel && (
+        <div className="catalog-selected-chip">
+          <div className="selected-chip-info">
+            <strong>{selectedModel.brand} {selectedModel.model}</strong>
+            <small>{selectedModel.ram} / {selectedModel.storage} • {selectedModel.color}</small>
           </div>
+          <button
+            type="button"
+            className="clear-catalog-btn"
+            title="Clear selection"
+            onClick={() => {
+              onSelect('');
+              setQuery('');
+            }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
+      {/* Search input wrapper — sales-page style */}
+      {!selectedModel && (
+        <div className="catalog-search-input-wrapper">
+          <Search size={16} className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search catalog models..."
+            value={query}
+            onChange={e => {
+              setQuery(e.target.value);
+              setIsOpen(true);
+            }}
+            onFocus={() => setIsOpen(true)}
+          />
+          {query && (
+            <button type="button" onClick={() => setQuery('')} className="clear-search">✕</button>
+          )}
+          <button
+            type="button"
+            className="catalog-browse-btn"
+            onClick={() => setIsOpen(prev => !prev)}
+            title="Browse all models"
+          >
+            <ChevronDown size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Dropdown overlay */}
+      {isOpen && (
+        <div className="catalog-dropdown-overlay" onClick={() => setIsOpen(false)} />
+      )}
+
+      {/* Dropdown panel */}
+      {isOpen && !selectedModel && (
+        <div className="catalog-dropdown-panel">
           <div className="catalog-options-list">
             <div
               className={`catalog-option-item ${!selectedId ? 'active' : ''}`}
@@ -145,7 +145,7 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
                 setIsOpen(false);
               }}
             >
-              <span className="option-title text-muted">— None (Custom Manual Entry) —</span>
+              <span className="option-title text-muted">— None (Manual Entry) —</span>
             </div>
 
             {filteredModels.length > 0 ? (
@@ -158,11 +158,12 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
                     onClick={() => {
                       onSelect(m.id);
                       setIsOpen(false);
+                      setQuery('');
                     }}
                   >
                     <div className="option-main">
                       <strong>{m.brand} {m.model}</strong>
-                      <span className="option-specs">{m.ram} RAM / {m.storage} Storage • {m.color}</span>
+                      <span className="option-specs">{m.ram} / {m.storage} • {m.color}</span>
                     </div>
                     {isSelected && <Check size={14} className="check-icon" />}
                   </div>
@@ -670,9 +671,9 @@ export default function PurchasesPage() {
       )}
 
       <style jsx>{`
-        .purchases-page { display: flex; flex-direction: column; gap: 20px; }
-        .view-tabs { display: flex; gap: 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 4px; width: fit-content; }
-        .view-tab { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 10px; font-size: 0.875rem; font-weight: 600; color: var(--text-muted); transition: all 0.2s; }
+        .purchases-page { display: flex; flex-direction: column; gap: 20px; max-width: 100%; overflow-x: hidden; }
+        .view-tabs { display: flex; gap: 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 4px; width: fit-content; max-width: 100%; }
+        .view-tab { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); transition: all 0.2s; white-space: nowrap; }
         .view-tab.active { background: var(--primary); color: white; }
         .view-tab:hover:not(.active) { background: var(--bg-active); color: var(--foreground); }
 
@@ -680,31 +681,31 @@ export default function PurchasesPage() {
         .catalog-hint { display: flex; align-items: center; gap: 14px; background: var(--primary-light); border: 1px solid var(--primary); border-radius: 12px; padding: 14px 18px; font-size: 0.875rem; flex-wrap: wrap; gap: 12px; }
         [data-theme="dark"] .catalog-hint { background: rgba(129,140,248,0.08); }
         .catalog-hint svg { color: var(--primary); flex-shrink: 0; }
-        .catalog-hint div { flex: 1; color: var(--text-muted); }
+        .catalog-hint div { flex: 1; color: var(--text-muted); min-width: 0; }
         .catalog-hint strong { color: var(--primary); }
         .catalog-link { padding: 7px 14px; background: var(--primary); color: white; border-radius: 8px; font-weight: 600; font-size: 0.8125rem; white-space: nowrap; }
 
         /* Form */
-        .purchase-form { display: flex; flex-direction: column; gap: 16px; }
-        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; }
+        .purchase-form { display: flex; flex-direction: column; gap: 16px; max-width: 100%; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; max-width: 100%; overflow: hidden; }
         .header-card { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
         .header-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .charges-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
         .input-group label { font-size: 0.8125rem; font-weight: 600; display: flex; align-items: center; gap: 5px; }
-        .input-group input, .input-group select, .input-group textarea { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--background); font-size: 0.875rem; outline: none; }
+        .input-group input, .input-group select, .input-group textarea { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--background); font-size: 0.875rem; outline: none; width: 100%; box-sizing: border-box; }
         .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
 
         /* Tablets card */
         .tablets-card { overflow: visible; }
-        .tablets-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
-        .tablets-header-left { display: flex; align-items: center; gap: 10px; }
-        .tablets-header-left h4 { font-size: 0.95rem; font-weight: 700; }
-        .entry-count { font-size: 0.75rem; background: var(--primary-light); color: var(--primary); padding: 3px 10px; border-radius: 999px; font-weight: 700; }
+        .tablets-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
+        .tablets-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .tablets-header-left h4 { font-size: 0.95rem; font-weight: 700; white-space: nowrap; }
+        .entry-count { font-size: 0.75rem; background: var(--primary-light); color: var(--primary); padding: 3px 10px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
         [data-theme="dark"] .entry-count { background: rgba(129,140,248,0.1); }
-        .tablets-header-right { display: flex; align-items: center; gap: 10px; }
-        .catalog-badge { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text-muted); background: var(--bg-active); padding: 5px 10px; border-radius: 8px; }
-        .add-row-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; background: var(--primary); color: white; font-size: 0.8125rem; font-weight: 600; }
+        .tablets-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .catalog-badge { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text-muted); background: var(--bg-active); padding: 5px 10px; border-radius: 8px; white-space: nowrap; }
+        .add-row-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; background: var(--primary); color: white; font-size: 0.8125rem; font-weight: 600; white-space: nowrap; }
 
         /* Table */
         .tablets-scroll { overflow-x: auto; }
@@ -718,40 +719,110 @@ export default function PurchasesPage() {
         [data-theme="dark"] .row-from-catalog { background: rgba(129, 140, 248, 0.03); }
         .row-num { color: var(--text-muted); font-size: 0.75rem; text-align: center; }
 
-        /* Searchable Catalog Select Styles */
-        .searchable-catalog-select { position: relative; width: 100%; min-width: 190px; }
-        .catalog-trigger-btn { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); font-size: 0.8rem; text-align: left; transition: all 0.15s; outline: none; }
-        .catalog-trigger-btn:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
-        .catalog-trigger-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 500; }
-        [data-theme="dark"] .catalog-trigger-btn.selected { background: rgba(129,140,248,0.1); }
-        .trigger-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-        .trigger-text small { color: var(--text-muted); font-size: 0.73rem; }
-        .placeholder-text { color: var(--text-muted); font-weight: normal; }
-        .trigger-actions { display: flex; align-items: center; flex-shrink: 0; }
-        .chevron-icon { color: var(--text-muted); }
-        .clear-catalog-btn { display: inline-flex; align-items: center; justify-content: center; padding: 2px; border-radius: 4px; color: var(--text-muted); transition: background 0.15s; }
+        /* Searchable Catalog Select — sales-page style */
+        .searchable-catalog-select { position: relative; width: 100%; }
+
+        .catalog-selected-chip {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 12px;
+          border-radius: 10px;
+          border: 1px solid var(--primary);
+          background: var(--primary-light);
+          width: 100%;
+          box-sizing: border-box;
+        }
+        [data-theme="dark"] .catalog-selected-chip { background: rgba(129,140,248,0.1); }
+        .selected-chip-info {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+        }
+        .selected-chip-info strong { font-size: 0.8125rem; color: var(--primary); }
+        .selected-chip-info small { font-size: 0.72rem; color: var(--text-muted); }
+        .clear-catalog-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 4px;
+          border-radius: 6px;
+          color: var(--text-muted);
+          flex-shrink: 0;
+          transition: all 0.15s;
+        }
         .clear-catalog-btn:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
-        .catalog-dropdown-panel { position: absolute; top: calc(100% + 4px); left: 0; width: 260px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 50; display: flex; flex-direction: column; overflow: hidden; }
-        .catalog-search-wrapper { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); background: var(--bg-active); }
+        .catalog-search-input-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: var(--background);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          padding: 0 10px;
+          width: 100%;
+          box-sizing: border-box;
+          transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .catalog-search-input-wrapper:focus-within {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 2px var(--primary-glow);
+        }
         .search-icon { color: var(--text-muted); flex-shrink: 0; }
-        .catalog-search-input { border: none; background: transparent; flex: 1; outline: none; font-size: 0.8rem; min-width: 0; }
-        .clear-query-btn { color: var(--text-muted); font-size: 0.75rem; padding: 2px 4px; }
+        .catalog-search-input-wrapper input {
+          border: none;
+          background: transparent;
+          padding: 10px 0;
+          flex: 1;
+          outline: none;
+          font-size: 0.8125rem;
+          min-width: 0;
+        }
+        .clear-search { color: var(--text-muted); font-size: 0.8125rem; flex-shrink: 0; padding: 2px 4px; }
+        .catalog-browse-btn {
+          color: var(--text-muted);
+          flex-shrink: 0;
+          padding: 4px;
+          border-radius: 6px;
+          transition: background 0.15s;
+        }
+        .catalog-browse-btn:hover { background: var(--bg-active); }
 
-        .catalog-options-list { max-height: 210px; overflow-y: auto; display: flex; flex-direction: column; }
-        .catalog-option-item { padding: 8px 12px; border-bottom: 1px dashed var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.15s; font-size: 0.8rem; }
+        .catalog-dropdown-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 40; }
+        .catalog-dropdown-panel {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0;
+          right: 0;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          box-shadow: var(--shadow-lg);
+          z-index: 50;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          max-width: 100%;
+        }
+
+        .catalog-options-list { max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; }
+        .catalog-option-item { padding: 10px 14px; border-bottom: 1px dashed var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.15s; font-size: 0.8125rem; gap: 8px; }
         .catalog-option-item:last-child { border-bottom: none; }
         .catalog-option-item:hover { background: var(--bg-active); }
         .catalog-option-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
         [data-theme="dark"] .catalog-option-item.active { background: rgba(129,140,248,0.12); }
-        .option-main { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+        .option-main { display: flex; flex-direction: column; gap: 1px; overflow: hidden; min-width: 0; flex: 1; }
+        .option-main strong { font-size: 0.8125rem; }
         .option-specs { font-size: 0.72rem; color: var(--text-muted); }
-        .catalog-no-results { padding: 14px; font-size: 0.78rem; color: var(--text-muted); text-align: center; }
+        .catalog-no-results { padding: 16px; font-size: 0.8125rem; color: var(--text-muted); text-align: center; }
         .check-icon { color: var(--primary); flex-shrink: 0; }
         .text-muted { color: var(--text-muted); }
 
         /* Table inputs */
-        .table-input { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); font-size: 0.8rem; outline: none; }
+        .table-input { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); font-size: 0.8rem; outline: none; box-sizing: border-box; }
         .table-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
         .imei-input { width: 135px; font-family: monospace; font-size: 0.75rem; }
         .qty-input { width: 65px; text-align: center; }
@@ -764,7 +835,7 @@ export default function PurchasesPage() {
         .imei-cell { display: flex; gap: 5px; align-items: center; }
         .scan-cell-btn { padding: 7px 9px; border-radius: 8px; background: var(--primary); color: white; flex-shrink: 0; }
         .price-cell { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 110px; }
-        .price-cell span { padding: 7px 7px; font-size: 0.7rem; background: var(--bg-active); border-right: 1px solid var(--border); color: var(--text-muted); }
+        .price-cell span { padding: 7px 7px; font-size: 0.7rem; background: var(--bg-active); border-right: 1px solid var(--border); color: var(--text-muted); white-space: nowrap; }
         .price-input { border: none; background: transparent; padding: 7px 7px; flex: 1; min-width: 0; outline: none; font-size: 0.85rem; font-weight: 600; }
 
         /* Line Total Display */
@@ -987,6 +1058,61 @@ export default function PurchasesPage() {
           .submit-btn {
             width: 100%;
             justify-content: center;
+          }
+
+          /* Catalog dropdown as bottom sheet on mobile */
+          .catalog-dropdown-panel {
+            position: fixed !important;
+            top: auto !important;
+            bottom: 0;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            max-height: 55vh;
+            border-radius: 20px 20px 0 0 !important;
+            z-index: 100;
+          }
+          .catalog-dropdown-overlay {
+            z-index: 90;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(2px);
+          }
+          .catalog-options-list {
+            max-height: 50vh;
+          }
+        }
+
+        /* Extra-small phones (< 440px) */
+        @media (max-width: 440px) {
+          .charges-row {
+            grid-template-columns: 1fr !important;
+          }
+          .view-tab {
+            padding: 7px 10px;
+            font-size: 0.75rem;
+            gap: 4px;
+          }
+          .tablets-header {
+            padding: 12px !important;
+          }
+          .tablets-scroll {
+            padding: 10px !important;
+          }
+          .entry-table tr {
+            padding: 12px !important;
+          }
+          .add-row-btn {
+            padding: 7px 10px;
+            font-size: 0.75rem;
+          }
+          .catalog-badge {
+            display: none;
+          }
+          .header-card {
+            padding: 12px !important;
+          }
+          .form-footer {
+            padding: 12px !important;
           }
         }
 
