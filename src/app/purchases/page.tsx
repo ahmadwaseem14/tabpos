@@ -188,6 +188,155 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        .searchable-catalog-select { position: relative; width: 100%; min-width: 180px; }
+        
+        .catalog-search-input-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: var(--background) !important;
+          border: 1px solid var(--border) !important;
+          border-radius: 10px !important;
+          padding: 0 12px !important;
+          height: 40px !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .catalog-search-input-wrapper:focus-within {
+          border-color: var(--primary) !important;
+          box-shadow: 0 0 0 2px var(--primary-glow) !important;
+        }
+        .search-icon { color: var(--text-muted); flex-shrink: 0; }
+        .catalog-search-input-wrapper input {
+          border: none !important;
+          background: transparent !important;
+          padding: 6px 0 !important;
+          flex: 1 !important;
+          outline: none !important;
+          font-size: 0.8125rem !important;
+          color: var(--foreground) !important;
+          min-width: 0 !important;
+          width: 100% !important;
+          box-shadow: none !important;
+        }
+        .clear-search { color: var(--text-muted); font-size: 0.8125rem; background: none; border: none; cursor: pointer; padding: 2px 4px; }
+        .catalog-browse-btn { color: var(--text-muted); background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; justify-content: center; }
+
+        .catalog-selected-chip {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 6px 12px;
+          background: var(--primary-light) !important;
+          border: 1px solid var(--primary) !important;
+          border-radius: 10px !important;
+          width: 100% !important;
+          height: 40px !important;
+          box-sizing: border-box !important;
+        }
+        [data-theme="dark"] .catalog-selected-chip { background: rgba(129, 140, 248, 0.15) !important; }
+        .selected-chip-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+        .selected-chip-info strong { font-size: 0.8125rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .selected-chip-info small { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .clear-catalog-btn { color: var(--text-muted); padding: 3px; border-radius: 4px; flex-shrink: 0; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .clear-catalog-btn:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+        /* Dropdown Overlay & Panel */
+        .catalog-dropdown-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 90;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(2px);
+        }
+
+        .catalog-dropdown-panel {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0;
+          right: 0;
+          background: var(--bg-card) !important;
+          border: 1px solid var(--border) !important;
+          border-radius: 12px !important;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+          z-index: 100;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          min-width: 220px;
+        }
+
+        .catalog-panel-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          background: var(--bg-active) !important;
+          border-bottom: 1px solid var(--border) !important;
+          font-size: 0.73rem;
+          font-weight: 700;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+        .close-panel-btn {
+          color: var(--text-muted);
+          font-size: 0.75rem;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 2px 4px;
+        }
+
+        .catalog-options-list { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-card) !important; }
+        .catalog-option-item { padding: 10px 14px; border-bottom: 1px dashed var(--border) !important; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.15s; font-size: 0.8125rem; gap: 8px; background: var(--bg-card) !important; color: var(--foreground) !important; }
+        .catalog-option-item:last-child { border-bottom: none !important; }
+        .catalog-option-item:hover { background: var(--bg-active) !important; }
+        .catalog-option-item.active { background: var(--primary-light) !important; color: var(--primary) !important; font-weight: 600; }
+        [data-theme="dark"] .catalog-option-item.active { background: rgba(129, 140, 248, 0.15) !important; }
+        
+        .option-main { display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; flex: 1; }
+        .option-main strong { font-size: 0.8125rem; color: var(--foreground) !important; }
+        .option-specs { font-size: 0.72rem; color: var(--text-muted) !important; }
+        
+        .add-item-btn { font-size: 0.75rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 4px 10px; border-radius: 6px; flex-shrink: 0; border: none; cursor: pointer; }
+        [data-theme="dark"] .add-item-btn { background: rgba(129, 140, 248, 0.2); }
+        .added-badge { font-size: 0.75rem; font-weight: 600; color: var(--success); display: flex; align-items: center; gap: 4px; }
+        .catalog-no-results { padding: 16px; text-align: center; font-size: 0.8125rem; color: var(--text-muted); background: var(--bg-card) !important; }
+
+        @media (max-width: 768px) {
+          .catalog-dropdown-panel {
+            position: fixed !important;
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            max-height: 60vh !important;
+            border-radius: 20px 20px 0 0 !important;
+            z-index: 1000 !important;
+            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.3) !important;
+            background: var(--bg-card) !important;
+          }
+          .catalog-panel-header {
+            padding: 12px 16px !important;
+            font-size: 0.8rem !important;
+          }
+          .catalog-options-list {
+            max-height: 50vh !important;
+          }
+          .catalog-option-item {
+            padding: 12px 16px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
