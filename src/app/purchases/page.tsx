@@ -69,7 +69,23 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
   useEffect(() => {
     if (isOpen && triggerRef.current && !isMobile) {
       const rect = triggerRef.current.getBoundingClientRect();
-      setDropdownPos({ top: rect.bottom + 4 + window.scrollY, left: rect.left + window.scrollX, width: rect.width });
+      const popoverHeight = 260;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      // If low space below, flip above trigger
+      if (spaceBelow < popoverHeight && rect.top > popoverHeight) {
+        setDropdownPos({
+          top: rect.top - popoverHeight - 4 + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: Math.max(rect.width, 240)
+        });
+      } else {
+        setDropdownPos({
+          top: rect.bottom + 4 + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: Math.max(rect.width, 240)
+        });
+      }
     }
   }, [isOpen, isMobile]);
 
@@ -91,40 +107,181 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
     return m.brand.toLowerCase().includes(q) || m.model.toLowerCase().includes(q) || m.ram.toLowerCase().includes(q) || m.storage.toLowerCase().includes(q) || m.color.toLowerCase().includes(q);
   });
 
-  const itemPad = isMobile ? '12px 16px' : '10px 14px';
-
   const dropdownContent = isOpen && !selectedModel && (
-    <div className="catalog-portal-dropdown" style={isMobile ? { position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999 } : { position: 'absolute', top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, zIndex: 9999 }}>
-      {isMobile && <div onClick={() => setIsOpen(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', zIndex: -1 }} />}
-      <div style={{ background: 'var(--bg-card)', borderRadius: isMobile ? '20px 20px 0 0' : '12px', border: '1px solid var(--border)', boxShadow: isMobile ? '0 -10px 25px rgba(0,0,0,0.3)' : '0 10px 25px rgba(0,0,0,0.25)', maxHeight: isMobile ? '60vh' : '260px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 16px' : '8px 12px', background: 'var(--bg-active)', borderBottom: '1px solid var(--border)', fontSize: isMobile ? '0.8rem' : '0.73rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-          <span>Catalog Models ({filteredModels.length})</span>
-          <button type="button" onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', padding: '2px 6px' }}>✕</button>
-        </div>
-        <div style={{ overflowY: 'auto', flex: 1, maxHeight: isMobile ? '50vh' : '220px' }}>
-          <div onClick={() => { onSelect(''); setIsOpen(false); }} style={{ padding: itemPad, borderBottom: '1px dashed var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', background: !selectedId ? 'var(--primary-light)' : 'var(--bg-card)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
-              <strong style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>— Manual Entry —</strong>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Type brand & model manually</span>
-            </div>
+    <div className="catalog-portal-dropdown" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999, pointerEvents: 'auto' }}>
+      {/* Backdrop */}
+      <div
+        onClick={() => setIsOpen(false)}
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)', zIndex: -1,
+        }}
+      />
+
+      {isMobile ? (
+        /* Mobile Top-Sheet Modal: Positioned at TOP of screen so keyboard never hides search or results */
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          background: 'var(--bg-card)',
+          borderRadius: '0 0 20px 20px',
+          borderBottom: '1px solid var(--border)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+          maxHeight: '80vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          zIndex: 100000,
+        }}>
+          {/* Top Bar Header */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '14px 16px 8px 16px',
+            fontSize: '0.85rem', fontWeight: 700,
+            color: 'var(--foreground)',
+          }}>
+            <span>Select Catalog Model ({filteredModels.length})</span>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              style={{
+                background: 'var(--bg-active)', border: 'none', color: 'var(--foreground)',
+                cursor: 'pointer', fontSize: '0.85rem', padding: '6px 14px', borderRadius: '8px',
+                fontWeight: 600
+              }}
+            >
+              Close ✕
+            </button>
           </div>
-          {filteredModels.length > 0 ? filteredModels.map(m => (
-            <div key={m.id} onClick={() => { onSelect(m.id); setIsOpen(false); setQuery(''); }} style={{ padding: itemPad, borderBottom: '1px dashed var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: m.id === selectedId ? 'var(--primary-light)' : 'var(--bg-card)', fontSize: '0.8125rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
-                <strong style={{ fontSize: '0.8125rem', color: 'var(--foreground)' }}>{m.brand} {m.model}</strong>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{m.ram} RAM / {m.storage} Storage • {m.color}</span>
-              </div>
-              {m.id === selectedId ? (
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14} /> Selected</span>
-              ) : (
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', background: 'var(--primary-light)', padding: '4px 10px', borderRadius: '6px', flexShrink: 0 }}>Select</span>
+
+          {/* Top Search Input inside Modal — Always at top of viewport above mobile soft keyboard */}
+          <div style={{ padding: '8px 16px 12px 16px' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'var(--background)', border: '2px solid var(--primary)',
+              borderRadius: '12px', padding: '0 12px', height: '44px', width: '100%', boxSizing: 'border-box'
+            }}>
+              <Search size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Search catalog brand, model..."
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                style={{
+                  border: 'none', background: 'transparent', padding: '8px 0',
+                  flex: 1, outline: 'none', fontSize: '0.9rem', color: 'var(--foreground)',
+                  minWidth: 0, width: '100%', fontWeight: 500
+                }}
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  style={{ color: 'var(--text-muted)', fontSize: '0.85rem', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                >
+                  ✕
+                </button>
               )}
             </div>
-          )) : (
-            <div style={{ padding: '16px', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)', background: 'var(--bg-card)' }}>No models match "{query}"</div>
-          )}
+          </div>
+
+          {/* Results List */}
+          <div style={{ overflowY: 'auto', flex: 1, maxHeight: 'calc(80vh - 120px)' }}>
+            <div
+              onClick={() => { onSelect(''); setIsOpen(false); }}
+              style={{
+                padding: '14px 16px', borderBottom: '1px dashed var(--border)',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px',
+                background: !selectedId ? 'var(--primary-light)' : 'var(--bg-card)'
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+                <strong style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>— Manual Entry (Custom Model) —</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Type custom brand &amp; model manually</span>
+              </div>
+            </div>
+
+            {filteredModels.length > 0 ? filteredModels.map(m => (
+              <div
+                key={m.id}
+                onClick={() => { onSelect(m.id); setIsOpen(false); setQuery(''); }}
+                style={{
+                  padding: '14px 16px', borderBottom: '1px dashed var(--border)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+                  background: m.id === selectedId ? 'var(--primary-light)' : 'var(--bg-card)'
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1, minWidth: 0 }}>
+                  <strong style={{ fontSize: '0.875rem', color: 'var(--foreground)' }}>{m.brand} {m.model}</strong>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{m.ram} RAM / {m.storage} Storage • {m.color}</span>
+                </div>
+                {m.id === selectedId ? (
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Check size={14} /> Selected
+                  </span>
+                ) : (
+                  <span style={{
+                    fontSize: '0.78rem', fontWeight: 600, color: 'var(--primary)',
+                    background: 'var(--primary-light)', padding: '6px 12px', borderRadius: '8px', flexShrink: 0
+                  }}>Select</span>
+                )}
+              </div>
+            )) : (
+              <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                No catalog models match &quot;{query}&quot;
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        /* Desktop Popover */
+        <div style={{
+          position: 'absolute',
+          top: dropdownPos.top,
+          left: dropdownPos.left,
+          width: dropdownPos.width,
+          zIndex: 100000,
+          background: 'var(--bg-card)',
+          borderRadius: '12px',
+          border: '1px solid var(--border)',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.25)',
+          maxHeight: '260px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--bg-active)', borderBottom: '1px solid var(--border)', fontSize: '0.73rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+            <span>Catalog Models ({filteredModels.length})</span>
+            <button type="button" onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', padding: '2px 6px' }}>✕</button>
+          </div>
+          <div style={{ overflowY: 'auto', flex: 1, maxHeight: '220px' }}>
+            <div onClick={() => { onSelect(''); setIsOpen(false); }} style={{ padding: '10px 14px', borderBottom: '1px dashed var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', background: !selectedId ? 'var(--primary-light)' : 'var(--bg-card)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+                <strong style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>— Manual Entry —</strong>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Type brand &amp; model manually</span>
+              </div>
+            </div>
+            {filteredModels.length > 0 ? filteredModels.map(m => (
+              <div key={m.id} onClick={() => { onSelect(m.id); setIsOpen(false); setQuery(''); }} style={{ padding: '10px 14px', borderBottom: '1px dashed var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: m.id === selectedId ? 'var(--primary-light)' : 'var(--bg-card)', fontSize: '0.8125rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
+                  <strong style={{ fontSize: '0.8125rem', color: 'var(--foreground)' }}>{m.brand} {m.model}</strong>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{m.ram} RAM / {m.storage} Storage • {m.color}</span>
+                </div>
+                {m.id === selectedId ? (
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14} /> Selected</span>
+                ) : (
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', background: 'var(--primary-light)', padding: '4px 10px', borderRadius: '6px', flexShrink: 0 }}>Select</span>
+                )}
+              </div>
+            )) : (
+              <div style={{ padding: '16px', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)', background: 'var(--bg-card)' }}>No models match &quot;{query}&quot;</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 
