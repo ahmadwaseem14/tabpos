@@ -1246,6 +1246,65 @@ export default function SuppliersPage() {
           .edit-actions { flex-direction: column; gap: 12px; }
           .edit-actions button { width: 100%; justify-content: center; }
         }
+
+        @media (max-width: 600px) {
+          .supplier-profile-header {
+            padding: 14px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+          }
+          .header-info {
+            gap: 10px;
+            min-width: 0;
+          }
+          .icon-wrapper {
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+          }
+          .header-info h3 {
+            font-size: 1.15rem;
+            word-break: break-word;
+          }
+          .header-info span {
+            font-size: 0.75rem;
+            word-break: break-word;
+            white-space: normal;
+          }
+          .header-balance {
+            width: 100%;
+            text-align: left;
+            background: var(--background);
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+          }
+          .header-balance h2 {
+            font-size: 1.25rem;
+          }
+          .supplier-row-card {
+            padding: 12px;
+            gap: 8px;
+          }
+          .row-info {
+            min-width: 0;
+            flex: 1;
+          }
+          .row-info strong {
+            font-size: 0.875rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+          }
+          .row-info span {
+            font-size: 0.72rem;
+          }
+          .row-balance {
+            font-size: 0.8rem;
+          }
+        }
       `}</style>
     </div>
   );

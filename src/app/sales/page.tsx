@@ -721,6 +721,23 @@ export default function SalesPage() {
         .spinner-center { display: flex; justify-content: center; padding: 40px; }
         .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 600px) {
+          .card-section {
+            padding: 12px 14px !important;
+          }
+          .credit-status {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 4px !important;
+          }
+          .shopkeeper-select {
+            font-size: 0.8125rem !important;
+          }
+          .method-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
       `}</style>
     </div>
   );
