@@ -79,7 +79,7 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
   });
 
   return (
-    <div className="searchable-dropdown-container" ref={containerRef}>
+    <div className="searchable-catalog-select" ref={containerRef}>
       {/* Selected model display chip */}
       {selectedModel ? (
         <div className="catalog-selected-chip">
@@ -90,7 +90,7 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
           <button
             type="button"
             className="clear-catalog-btn"
-            title="Clear catalog link"
+            title="Change selection"
             onClick={() => {
               onSelect('');
               setQuery('');
@@ -100,78 +100,92 @@ function SearchableCatalogSelect({ catalogModels, selectedId, onSelect }: Search
           </button>
         </div>
       ) : (
-        /* Search input wrapper — matching Sales page 1:1 */
-        <div className="search-input-wrapper">
+        /* Search input wrapper */
+        <div className="catalog-search-input-wrapper">
           <Search size={16} className="search-icon" />
           <input
             type="text"
-            placeholder="Search catalog..."
+            placeholder={catalogModels.length > 0 ? "Search catalog model..." : "Catalog empty — type manually"}
             value={query}
             onChange={e => {
               setQuery(e.target.value);
               setIsOpen(true);
             }}
             onFocus={() => setIsOpen(true)}
+            disabled={catalogModels.length === 0}
           />
           {query ? (
             <button type="button" onClick={() => setQuery('')} className="clear-search">✕</button>
           ) : (
-            <ChevronDown size={14} className="search-icon" style={{ opacity: 0.6 }} />
+            <button
+              type="button"
+              className="catalog-browse-btn"
+              onClick={() => setIsOpen(prev => !prev)}
+              title="Browse catalog models"
+            >
+              <ChevronDown size={14} />
+            </button>
           )}
         </div>
       )}
 
-      {/* Dropdown overlay */}
+      {/* Dimmed backdrop overlay */}
       {isOpen && (
-        <div className="dropdown-overlay" onClick={() => setIsOpen(false)} />
+        <div className="catalog-dropdown-overlay" onClick={() => setIsOpen(false)} />
       )}
 
-      {/* Dropdown panel — matching Sales page 1:1 */}
+      {/* Dropdown panel — Solid background card & bottom sheet on mobile */}
       {isOpen && !selectedModel && (
-        <div className="dropdown-list-card">
-          <div
-            className="dropdown-item"
-            onClick={() => {
-              onSelect('');
-              setIsOpen(false);
-            }}
-          >
-            <div className="item-info">
-              <strong className="text-muted">— Manual Entry (No Catalog) —</strong>
-              <small className="text-muted">Type custom brand &amp; model manually</small>
-            </div>
+        <div className="catalog-dropdown-panel">
+          <div className="catalog-panel-header">
+            <span>Product Catalog Models ({filteredModels.length})</span>
+            <button type="button" className="close-panel-btn" onClick={() => setIsOpen(false)}>✕</button>
           </div>
-
-          {filteredModels.length > 0 ? (
-            filteredModels.map(m => {
-              const isSelected = m.id === selectedId;
-              return (
-                <div
-                  key={m.id}
-                  className={`dropdown-item ${isSelected ? 'added' : ''}`}
-                  onClick={() => {
-                    onSelect(m.id);
-                    setIsOpen(false);
-                    setQuery('');
-                  }}
-                >
-                  <div className="item-info">
-                    <strong>{m.brand} {m.model}</strong>
-                    <span>{m.ram} RAM / {m.storage} Storage • {m.color}</span>
-                  </div>
-                  {isSelected ? (
-                    <span className="added-badge"><Check size={14} /> Selected</span>
-                  ) : (
-                    <button type="button" className="add-item-btn">Select</button>
-                  )}
-                </div>
-              );
-            })
-          ) : (
-            <div className="dropdown-empty">
-              No catalog models match &quot;{query}&quot;
+          <div className="catalog-options-list">
+            <div
+              className={`catalog-option-item ${!selectedId ? 'active' : ''}`}
+              onClick={() => {
+                onSelect('');
+                setIsOpen(false);
+              }}
+            >
+              <div className="option-main">
+                <strong className="text-muted">— Manual Entry (No Catalog) —</strong>
+                <span className="option-specs">Type custom brand, model &amp; specs manually</span>
+              </div>
             </div>
-          )}
+
+            {filteredModels.length > 0 ? (
+              filteredModels.map(m => {
+                const isSelected = m.id === selectedId;
+                return (
+                  <div
+                    key={m.id}
+                    className={`catalog-option-item ${isSelected ? 'active' : ''}`}
+                    onClick={() => {
+                      onSelect(m.id);
+                      setIsOpen(false);
+                      setQuery('');
+                    }}
+                  >
+                    <div className="option-main">
+                      <strong>{m.brand} {m.model}</strong>
+                      <span className="option-specs">{m.ram} RAM / {m.storage} Storage • {m.color}</span>
+                    </div>
+                    {isSelected ? (
+                      <span className="added-badge"><Check size={14} /> Selected</span>
+                    ) : (
+                      <button type="button" className="add-item-btn">Select</button>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="catalog-no-results">
+                No catalog models match &quot;{query}&quot;
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -198,10 +212,6 @@ export default function PurchasesPage() {
   const [extraCharges, setExtraCharges] = useState('0');
   const [notes, setNotes] = useState('');
   const [tablets, setTablets] = useState<TabletEntry[]>([createBlankTablet()]);
-
-  // Top Catalog Search state
-  const [topCatalogQuery, setTopCatalogQuery] = useState('');
-  const [isTopCatalogOpen, setIsTopCatalogOpen] = useState(false);
 
   const addToast = (text: string, type: 'success' | 'warning' | 'error') => {
     setToasts(prev => [...prev, { id: Math.random().toString(), text, type }]);
@@ -230,42 +240,7 @@ export default function PurchasesPage() {
     setTablets(prev => prev.map((t, i) => i === idx ? { ...t, [field]: value } : t));
   };
 
-  // Select or add catalog model row from top search
-  const addCatalogModelRow = (modelId: string) => {
-    const found = catalogModels.find(m => m.id === modelId);
-    if (!found) return;
-
-    const lastIdx = tablets.length - 1;
-    const lastRow = tablets[lastIdx];
-    const isLastRowEmpty = lastRow && !lastRow.catalogModelId && !lastRow.model.trim() && !lastRow.purchasePrice.trim();
-
-    if (isLastRowEmpty) {
-      setTablets(prev => prev.map((t, i) => i === lastIdx ? {
-        ...t,
-        catalogModelId: found.id,
-        brand: found.brand,
-        model: found.model,
-        ram: found.ram,
-        storage: found.storage,
-        color: found.color,
-      } : t));
-    } else {
-      setTablets(prev => [...prev, {
-        catalogModelId: found.id,
-        imei: '',
-        serialNumber: '',
-        brand: found.brand,
-        model: found.model,
-        ram: found.ram,
-        storage: found.storage,
-        color: found.color,
-        purchasePrice: '',
-        quantity: '1'
-      }]);
-    }
-  };
-
-  // When a catalog model is selected in a specific row, auto-fill all model fields
+  // When a catalog model is selected, auto-fill all model fields
   const selectCatalogModel = (idx: number, modelId: string) => {
     const found = catalogModels.find(m => m.id === modelId);
     if (!found) {
@@ -456,73 +431,6 @@ export default function PurchasesPage() {
                 </button>
               </div>
             </div>
-
-            {/* Sales-Style Top Catalog Search Bar */}
-            {catalogModels.length > 0 && (
-              <div className="catalog-top-search-bar" style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-active)' }}>
-                <label className="section-label" style={{ marginBottom: '8px', display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Quick Search Catalog to Add Items
-                </label>
-                <div className="searchable-dropdown-container">
-                  <div className="imei-input-row">
-                    <div className="search-input-wrapper">
-                      <Search size={16} className="search-icon" />
-                      <input
-                        type="text"
-                        placeholder={`Search ${catalogModels.length} catalog models (e.g. Samsung A54, iPad, 64GB)...`}
-                        value={topCatalogQuery}
-                        onChange={e => {
-                          setTopCatalogQuery(e.target.value);
-                          setIsTopCatalogOpen(true);
-                        }}
-                        onFocus={() => setIsTopCatalogOpen(true)}
-                      />
-                      {topCatalogQuery && (
-                        <button type="button" onClick={() => setTopCatalogQuery('')} className="clear-search">✕</button>
-                      )}
-                    </div>
-                  </div>
-
-                  {isTopCatalogOpen && (
-                    <div className="dropdown-overlay" onClick={() => setIsTopCatalogOpen(false)} />
-                  )}
-
-                  {isTopCatalogOpen && (
-                    <div className="dropdown-list-card">
-                      {catalogModels.filter(m => {
-                        const q = topCatalogQuery.toLowerCase().trim();
-                        if (!q) return true;
-                        return m.brand.toLowerCase().includes(q) || m.model.toLowerCase().includes(q) || m.ram.toLowerCase().includes(q) || m.storage.toLowerCase().includes(q) || m.color.toLowerCase().includes(q);
-                      }).length > 0 ? (
-                        catalogModels.filter(m => {
-                          const q = topCatalogQuery.toLowerCase().trim();
-                          if (!q) return true;
-                          return m.brand.toLowerCase().includes(q) || m.model.toLowerCase().includes(q) || m.ram.toLowerCase().includes(q) || m.storage.toLowerCase().includes(q) || m.color.toLowerCase().includes(q);
-                        }).map(m => (
-                          <div
-                            key={m.id}
-                            className="dropdown-item"
-                            onClick={() => {
-                              addCatalogModelRow(m.id);
-                              setTopCatalogQuery('');
-                              setIsTopCatalogOpen(false);
-                            }}
-                          >
-                            <div className="item-info">
-                              <strong>{m.brand} {m.model}</strong>
-                              <span>{m.ram} RAM / {m.storage} Storage • Color: {m.color}</span>
-                            </div>
-                            <button type="button" className="add-item-btn">+ Add Item</button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="dropdown-empty">No catalog models match &quot;{topCatalogQuery}&quot;</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             <div className="tablets-scroll">
               <table className="entry-table">
@@ -822,36 +730,126 @@ export default function PurchasesPage() {
         [data-theme="dark"] .row-from-catalog { background: rgba(129, 140, 248, 0.03); }
         .row-num { color: var(--text-muted); font-size: 0.75rem; text-align: center; }
 
-        /* Searchable Catalog Select & Dropdowns — Sales page styling 1:1 */
-        .searchable-dropdown-container { position: relative; width: 100%; min-width: 180px; }
-        .imei-input-row { display: flex; gap: 8px; width: 100%; }
-        .search-input-wrapper { display: flex; align-items: center; gap: 8px; background: var(--background); border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; height: 38px; width: 100%; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
-        .search-input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+        /* Searchable Catalog Select & Dropdowns */
+        .searchable-catalog-select { position: relative; width: 100%; min-width: 180px; }
+        
+        .catalog-search-input-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: var(--background);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          padding: 0 12px;
+          height: 38px;
+          width: 100%;
+          box-sizing: border-box;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .catalog-search-input-wrapper:focus-within {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 2px var(--primary-glow);
+        }
         .search-icon { color: var(--text-muted); flex-shrink: 0; }
-        .search-input-wrapper input { border: none; background: transparent; padding: 6px 0; flex: 1; outline: none; font-size: 0.8125rem; color: var(--foreground); min-width: 0; width: 100%; }
+        .catalog-search-input-wrapper input {
+          border: none;
+          background: transparent;
+          padding: 6px 0;
+          flex: 1;
+          outline: none;
+          font-size: 0.8125rem;
+          color: var(--foreground);
+          min-width: 0;
+          width: 100%;
+        }
         .clear-search { color: var(--text-muted); font-size: 0.8125rem; background: none; border: none; cursor: pointer; padding: 2px 4px; }
+        .catalog-browse-btn { color: var(--text-muted); background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; justify-content: center; }
 
-        .dropdown-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 40; }
-        .dropdown-list-card { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 50; max-height: 240px; overflow-y: auto; margin-top: 4px; min-width: 200px; }
-        .dropdown-item { padding: 10px 14px; border-bottom: 1px dashed var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.2s; gap: 8px; }
-        .dropdown-item:last-child { border-bottom: none; }
-        .dropdown-item:hover:not(.added) { background: var(--bg-active); }
-        .dropdown-item.added { cursor: not-allowed; background: rgba(99, 102, 241, 0.03); }
-        .item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-        .item-info strong { font-size: 0.8125rem; color: var(--foreground); }
-        .item-info span { font-size: 0.73rem; color: var(--text-muted); }
-        .add-item-btn { font-size: 0.75rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 4px 10px; border-radius: 6px; flex-shrink: 0; border: none; }
-        [data-theme="dark"] .add-item-btn { background: rgba(129, 140, 248, 0.15); }
-        .added-badge { font-size: 0.75rem; font-weight: 600; color: var(--success); display: flex; align-items: center; gap: 4px; }
-        .dropdown-empty { padding: 16px; text-align: center; font-size: 0.8125rem; color: var(--text-muted); }
-
-        .catalog-selected-chip { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; background: var(--primary-light); border: 1px solid var(--primary); border-radius: 10px; width: 100%; height: 38px; box-sizing: border-box; }
+        .catalog-selected-chip {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 6px 12px;
+          background: var(--primary-light);
+          border: 1px solid var(--primary);
+          border-radius: 10px;
+          width: 100%;
+          height: 38px;
+          box-sizing: border-box;
+        }
         [data-theme="dark"] .catalog-selected-chip { background: rgba(129, 140, 248, 0.12); }
         .selected-chip-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
         .selected-chip-info strong { font-size: 0.8125rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .selected-chip-info small { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .clear-catalog-btn { color: var(--text-muted); padding: 3px; border-radius: 4px; flex-shrink: 0; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .clear-catalog-btn:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+        /* Dropdown Overlay & Panel */
+        .catalog-dropdown-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 90;
+          background: rgba(0, 0, 0, 0.35);
+          backdrop-filter: blur(2px);
+        }
+
+        .catalog-dropdown-panel {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0;
+          right: 0;
+          background: var(--bg-card) !important;
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          box-shadow: var(--shadow-lg);
+          z-index: 100;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          min-width: 220px;
+        }
+
+        .catalog-panel-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          background: var(--bg-active);
+          border-bottom: 1px solid var(--border);
+          font-size: 0.73rem;
+          font-weight: 700;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+        .close-panel-btn {
+          color: var(--text-muted);
+          font-size: 0.75rem;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 2px 4px;
+        }
+
+        .catalog-options-list { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-card); }
+        .catalog-option-item { padding: 10px 14px; border-bottom: 1px dashed var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.15s; font-size: 0.8125rem; gap: 8px; background: var(--bg-card); }
+        .catalog-option-item:last-child { border-bottom: none; }
+        .catalog-option-item:hover { background: var(--bg-active); }
+        .catalog-option-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+        [data-theme="dark"] .catalog-option-item.active { background: rgba(129, 140, 248, 0.12); }
+        
+        .option-main { display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; flex: 1; }
+        .option-main strong { font-size: 0.8125rem; color: var(--foreground); }
+        .option-specs { font-size: 0.72rem; color: var(--text-muted); }
+        
+        .add-item-btn { font-size: 0.75rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 4px 10px; border-radius: 6px; flex-shrink: 0; border: none; }
+        [data-theme="dark"] .add-item-btn { background: rgba(129, 140, 248, 0.15); }
+        .added-badge { font-size: 0.75rem; font-weight: 600; color: var(--success); display: flex; align-items: center; gap: 4px; }
+        .catalog-no-results { padding: 16px; font-size: 0.8125rem; color: var(--text-muted); text-align: center; background: var(--bg-card); }
 
         /* Table inputs */
         .table-input { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); font-size: 0.8rem; outline: none; box-sizing: border-box; }
@@ -1092,25 +1090,29 @@ export default function PurchasesPage() {
             justify-content: center;
           }
 
-          /* Catalog dropdown as bottom sheet on mobile */
+          /* Catalog dropdown modal bottom sheet on mobile */
           .catalog-dropdown-panel {
             position: fixed !important;
             top: auto !important;
-            bottom: 0;
+            bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
             width: 100% !important;
-            max-height: 55vh;
+            max-height: 60vh !important;
             border-radius: 20px 20px 0 0 !important;
-            z-index: 100;
+            z-index: 1000 !important;
+            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.25) !important;
+            background: var(--bg-card) !important;
           }
-          .catalog-dropdown-overlay {
-            z-index: 90;
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(2px);
+          .catalog-panel-header {
+            padding: 12px 16px !important;
+            font-size: 0.8rem !important;
           }
           .catalog-options-list {
-            max-height: 50vh;
+            max-height: 50vh !important;
+          }
+          .catalog-option-item {
+            padding: 12px 16px !important;
           }
         }
 
