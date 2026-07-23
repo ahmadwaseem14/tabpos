@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Filter, CheckCircle, XCircle, Clock, Layers, RefreshCw, Package, ScanLine } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ToastContainer, ToastMessage } from '@/components/Toast';
 import MobileScanner from '@/components/MobileScanner';
+
 
 interface TabletInstance {
   imei: string;
@@ -272,7 +274,7 @@ export default function InventoryPage() {
       </div>
 
       {/* QC Update Modal */}
-      {showQcModal && qcTablet && (
+      {showQcModal && qcTablet && typeof document !== 'undefined' && createPortal(
         <div className="modal-backdrop" onClick={() => setShowQcModal(false)}>
           <div className="modal-card animate-fade-in" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
@@ -316,7 +318,8 @@ export default function InventoryPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style jsx>{`
@@ -347,14 +350,15 @@ export default function InventoryPage() {
         .row-highlight { background: rgba(245, 158, 11, 0.03); }
         .sub-text { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
         .imei-text { font-family: monospace; font-size: 0.8rem; }
-        .qc-action-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-active); font-size: 0.75rem; font-weight: 600; transition: all 0.2s; }
+        .qc-action-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-active); font-size: 0.75rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
         .qc-action-btn:hover { border-color: var(--primary); color: var(--primary); }
         .spinner-center { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; gap: 12px; color: var(--text-muted); font-size: 0.875rem; }
         .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .empty-row { text-align: center; padding: 60px !important; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
-        .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .modal-card { background: var(--bg-card); border: 1px solid var(--border); width: 100%; max-width: 480px; border-radius: 20px; box-shadow: var(--shadow-lg); overflow: hidden; }
+        
+        .modal-backdrop { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.6) !important; backdrop-filter: blur(4px); display: flex !important; align-items: center !important; justify-content: center !important; z-index: 99999 !important; padding: 16px !important; box-sizing: border-box !important; }
+        .modal-card { background: var(--bg-card); border: 1px solid var(--border); width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
         .modal-header h3 { font-size: 1rem; font-weight: 700; }
         .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }

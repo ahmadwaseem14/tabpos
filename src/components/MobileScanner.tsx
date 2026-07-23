@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { X, Camera, Zap } from 'lucide-react';
 
@@ -112,7 +113,7 @@ export default function MobileScanner({ onScan, onClose }: MobileScannerProps) {
     onClose();
   };
 
-  return (
+  const modalContent = (
     <div className="scanner-overlay" onClick={handleClose}>
       <div className="scanner-card" onClick={e => e.stopPropagation()}>
         <div className="scanner-header">
@@ -151,17 +152,17 @@ export default function MobileScanner({ onScan, onClose }: MobileScannerProps) {
 
       <style jsx>{`
         .scanner-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.85);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          z-index: 1200;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          background: rgba(0, 0, 0, 0.85) !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 20px !important;
+          z-index: 99999 !important;
         }
 
         .scanner-card {
@@ -301,4 +302,7 @@ export default function MobileScanner({ onScan, onClose }: MobileScannerProps) {
       `}</style>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }
+
