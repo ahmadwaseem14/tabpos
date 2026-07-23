@@ -199,6 +199,10 @@ export default function PurchasesPage() {
   const [notes, setNotes] = useState('');
   const [tablets, setTablets] = useState<TabletEntry[]>([createBlankTablet()]);
 
+  // Top Catalog Search state
+  const [topCatalogQuery, setTopCatalogQuery] = useState('');
+  const [isTopCatalogOpen, setIsTopCatalogOpen] = useState(false);
+
   const addToast = (text: string, type: 'success' | 'warning' | 'error') => {
     setToasts(prev => [...prev, { id: Math.random().toString(), text, type }]);
   };
@@ -226,7 +230,42 @@ export default function PurchasesPage() {
     setTablets(prev => prev.map((t, i) => i === idx ? { ...t, [field]: value } : t));
   };
 
-  // When a catalog model is selected, auto-fill all model fields
+  // Select or add catalog model row from top search
+  const addCatalogModelRow = (modelId: string) => {
+    const found = catalogModels.find(m => m.id === modelId);
+    if (!found) return;
+
+    const lastIdx = tablets.length - 1;
+    const lastRow = tablets[lastIdx];
+    const isLastRowEmpty = lastRow && !lastRow.catalogModelId && !lastRow.model.trim() && !lastRow.purchasePrice.trim();
+
+    if (isLastRowEmpty) {
+      setTablets(prev => prev.map((t, i) => i === lastIdx ? {
+        ...t,
+        catalogModelId: found.id,
+        brand: found.brand,
+        model: found.model,
+        ram: found.ram,
+        storage: found.storage,
+        color: found.color,
+      } : t));
+    } else {
+      setTablets(prev => [...prev, {
+        catalogModelId: found.id,
+        imei: '',
+        serialNumber: '',
+        brand: found.brand,
+        model: found.model,
+        ram: found.ram,
+        storage: found.storage,
+        color: found.color,
+        purchasePrice: '',
+        quantity: '1'
+      }]);
+    }
+  };
+
+  // When a catalog model is selected in a specific row, auto-fill all model fields
   const selectCatalogModel = (idx: number, modelId: string) => {
     const found = catalogModels.find(m => m.id === modelId);
     if (!found) {
@@ -417,6 +456,73 @@ export default function PurchasesPage() {
                 </button>
               </div>
             </div>
+
+            {/* Sales-Style Top Catalog Search Bar */}
+            {catalogModels.length > 0 && (
+              <div className="catalog-top-search-bar" style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-active)' }}>
+                <label className="section-label" style={{ marginBottom: '8px', display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Quick Search Catalog to Add Items
+                </label>
+                <div className="searchable-dropdown-container">
+                  <div className="imei-input-row">
+                    <div className="search-input-wrapper">
+                      <Search size={16} className="search-icon" />
+                      <input
+                        type="text"
+                        placeholder={`Search ${catalogModels.length} catalog models (e.g. Samsung A54, iPad, 64GB)...`}
+                        value={topCatalogQuery}
+                        onChange={e => {
+                          setTopCatalogQuery(e.target.value);
+                          setIsTopCatalogOpen(true);
+                        }}
+                        onFocus={() => setIsTopCatalogOpen(true)}
+                      />
+                      {topCatalogQuery && (
+                        <button type="button" onClick={() => setTopCatalogQuery('')} className="clear-search">✕</button>
+                      )}
+                    </div>
+                  </div>
+
+                  {isTopCatalogOpen && (
+                    <div className="dropdown-overlay" onClick={() => setIsTopCatalogOpen(false)} />
+                  )}
+
+                  {isTopCatalogOpen && (
+                    <div className="dropdown-list-card">
+                      {catalogModels.filter(m => {
+                        const q = topCatalogQuery.toLowerCase().trim();
+                        if (!q) return true;
+                        return m.brand.toLowerCase().includes(q) || m.model.toLowerCase().includes(q) || m.ram.toLowerCase().includes(q) || m.storage.toLowerCase().includes(q) || m.color.toLowerCase().includes(q);
+                      }).length > 0 ? (
+                        catalogModels.filter(m => {
+                          const q = topCatalogQuery.toLowerCase().trim();
+                          if (!q) return true;
+                          return m.brand.toLowerCase().includes(q) || m.model.toLowerCase().includes(q) || m.ram.toLowerCase().includes(q) || m.storage.toLowerCase().includes(q) || m.color.toLowerCase().includes(q);
+                        }).map(m => (
+                          <div
+                            key={m.id}
+                            className="dropdown-item"
+                            onClick={() => {
+                              addCatalogModelRow(m.id);
+                              setTopCatalogQuery('');
+                              setIsTopCatalogOpen(false);
+                            }}
+                          >
+                            <div className="item-info">
+                              <strong>{m.brand} {m.model}</strong>
+                              <span>{m.ram} RAM / {m.storage} Storage • Color: {m.color}</span>
+                            </div>
+                            <button type="button" className="add-item-btn">+ Add Item</button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="dropdown-empty">No catalog models match &quot;{topCatalogQuery}&quot;</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="tablets-scroll">
               <table className="entry-table">
