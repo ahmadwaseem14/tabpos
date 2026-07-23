@@ -275,9 +275,22 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
         @media (max-width: 768px) {
           .main-content {
             margin-left: 0;
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
           }
           .page-body {
-            padding: 16px;
+            padding: 12px;
+            width: 100%;
+            max-width: 100vw;
+            box-sizing: border-box;
+            overflow-x: hidden;
+          }
+          .page-inner {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
           }
         }
       `}</style>

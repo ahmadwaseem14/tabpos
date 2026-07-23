@@ -1239,14 +1239,38 @@ export default function ShopkeepersPage() {
             height: auto;
             min-height: calc(100vh - var(--navbar-height) - var(--bottom-nav-height, 60px) - 20px);
             padding-bottom: 20px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
           }
           .page-layout {
             height: auto;
             border-radius: 12px;
             flex-direction: column;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
           }
-          .list-panel { width: 100%; border-right: none; }
-          .details-panel { width: 100%; overflow: visible; }
+          .list-panel {
+            width: 100%;
+            max-width: 100%;
+            border-right: none;
+            box-sizing: border-box;
+          }
+          .details-panel {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            box-sizing: border-box;
+          }
+          .shopkeeper-details {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
+          }
           .mobile-hidden { display: none !important; }
 
           .mobile-detail-topbar {
@@ -1255,6 +1279,8 @@ export default function ShopkeepersPage() {
             padding: 10px 14px;
             background: var(--bg-active);
             border-bottom: 1px solid var(--border);
+            width: 100%;
+            box-sizing: border-box;
           }
           .back-list-btn {
             display: flex;
@@ -1272,17 +1298,40 @@ export default function ShopkeepersPage() {
             flex-direction: column;
             align-items: flex-start;
             gap: 12px;
-            padding: 16px;
+            padding: 14px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+          }
+          .header-info {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            gap: 10px;
+          }
+          .header-info h3 {
+            font-size: 1.15rem;
+            word-break: break-word;
+          }
+          .header-info span {
+            font-size: 0.75rem;
+            word-break: break-word;
+            white-space: normal;
           }
           .header-balance {
             text-align: left;
             width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
             background: var(--background);
-            padding: 12px 14px;
+            padding: 10px 12px;
             border-radius: 12px;
             border: 1px solid var(--border);
           }
-          .header-balance h2 { font-size: 1.35rem; }
+          .header-balance h2 {
+            font-size: 1.25rem;
+            word-break: break-word;
+          }
 
           /* Touch-friendly Pill Tab Nav on Mobile */
           .tabs-nav {
@@ -1295,6 +1344,9 @@ export default function ShopkeepersPage() {
             border-bottom: 1px solid var(--border);
             scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
           }
           .tabs-nav::-webkit-scrollbar { display: none; }
           .tab-btn {
@@ -1313,51 +1365,54 @@ export default function ShopkeepersPage() {
             border-color: var(--primary);
           }
 
-          .tab-content { padding: 14px; overflow: visible; }
-          .input-grid { grid-template-columns: 1fr; }
-          .edit-actions { flex-direction: column; gap: 12px; }
-          .edit-actions button { width: 100%; justify-content: center; }
-        }
-
-        @media (max-width: 600px) {
-          .shopkeeper-profile-header {
-            padding: 14px;
+          .tab-content {
+            padding: 10px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
+          }
+          .card, .edit-form-card, .payment-form {
+            padding: 14px !important;
+            border-radius: 14px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          .method-pill-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+            gap: 6px !important;
+            width: 100% !important;
+          }
+          .method-pill {
+            padding: 8px 10px !important;
+            font-size: 0.75rem !important;
+            text-align: center !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          .input-grid {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
+          .edit-actions {
             flex-direction: column;
-            align-items: stretch;
             gap: 12px;
           }
-          .header-info {
-            gap: 10px;
-            min-width: 0;
-          }
-          .icon-wrapper {
-            width: 42px;
-            height: 42px;
-            flex-shrink: 0;
-          }
-          .header-info h3 {
-            font-size: 1.15rem;
-            word-break: break-word;
-          }
-          .header-info span {
-            font-size: 0.75rem;
-            word-break: break-word;
-            white-space: normal;
-          }
-          .header-balance {
+          .edit-actions button {
             width: 100%;
-            text-align: left;
-            background: var(--background);
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
+            justify-content: center;
           }
-          .header-balance h2 {
-            font-size: 1.25rem;
+          .big-mobile-input input {
+            font-size: 1rem !important;
+            width: 100% !important;
           }
           .shopkeeper-row-card {
             padding: 12px;
             gap: 8px;
+            width: 100%;
+            box-sizing: border-box;
           }
           .row-info {
             min-width: 0;
@@ -1375,36 +1430,6 @@ export default function ShopkeepersPage() {
           }
           .row-balance {
             font-size: 0.8rem;
-          }
-
-          /* Detail Tab Cards Responsiveness (< 600px) */
-          .tab-content {
-            padding: 10px;
-            overflow-x: hidden;
-          }
-          .card, .edit-form-card, .payment-form {
-            padding: 14px !important;
-            border-radius: 14px !important;
-            max-width: 100% !important;
-            box-sizing: border-box !important;
-          }
-          .method-pill-grid {
-            display: grid !important;
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 6px !important;
-          }
-          .method-pill {
-            padding: 8px 10px !important;
-            font-size: 0.75rem !important;
-            text-align: center !important;
-            width: 100% !important;
-          }
-          .input-grid {
-            grid-template-columns: 1fr !important;
-            gap: 12px !important;
-          }
-          .big-mobile-input input {
-            font-size: 1rem !important;
           }
         }
       `}</style>
