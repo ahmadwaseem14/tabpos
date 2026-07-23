@@ -1304,6 +1304,52 @@ export default function SuppliersPage() {
           .row-balance {
             font-size: 0.8rem;
           }
+
+          /* Detail Tab Cards Responsiveness (< 600px) */
+          .tab-content {
+            padding: 10px;
+            overflow-x: hidden;
+          }
+          .card, .quote-form-side, .quote-item-card, .payment-form, .edit-form-card {
+            padding: 14px !important;
+            border-radius: 14px !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          .builder-row {
+            grid-template-columns: 1fr !important;
+            gap: 6px !important;
+            padding-right: 36px !important;
+          }
+          .builder-row input[type="number"] {
+            grid-column: span 1 !important;
+          }
+          .quote-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+          }
+          .quote-mini-table {
+            word-break: break-word;
+          }
+          .method-pill-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 6px !important;
+          }
+          .method-pill {
+            padding: 8px 10px !important;
+            font-size: 0.75rem !important;
+            text-align: center !important;
+            width: 100% !important;
+          }
+          .input-grid {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
+          .big-mobile-input input {
+            font-size: 1rem !important;
+          }
         }
       `}</style>
     </div>

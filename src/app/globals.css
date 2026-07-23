@@ -338,3 +338,18 @@ button {
     margin-right: 16px;
   }
 }
+
+@media (max-width: 600px) {
+  .responsive-table-cards td {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    gap: 4px !important;
+    word-break: break-word !important;
+  }
+  .responsive-table-cards td::before {
+    margin-right: 0 !important;
+    margin-bottom: 2px !important;
+  }
+}
+
